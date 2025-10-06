@@ -11,6 +11,8 @@ interface VirtualCardProps {
   onToggleVisibility?: () => void;
   showDetails?: boolean;
   className?: string;
+  compact?: boolean;
+  onExpand?: () => void;
 }
 
 const VirtualCard: React.FC<VirtualCardProps> = ({
@@ -18,12 +20,18 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
   onCopy,
   onToggleVisibility,
   showDetails = true,
-  className = ''
+  className = '',
+  compact = false,
+  onExpand
 }) => {
   const [isDetailsVisible, setIsDetailsVisible] = React.useState(false);
 
   const formatCardNumber = (number: string, visible: boolean) => {
     if (!visible) return '•••• •••• •••• ••••';
+    if (compact) {
+      // Показываем только последние 4 цифры в компактном режиме
+      return `•••• •••• •••• ${number.slice(-4)}`;
+    }
     return number.replace(/(.{4})/g, '$1 ').trim();
   };
 
@@ -68,6 +76,65 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
     onToggleVisibility?.();
   };
 
+  // Компактная версия карты
+  if (compact) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`relative ${className}`}
+        onClick={onExpand}
+      >
+        <div className={`${getCardGradient('stellex')} rounded-2xl p-4 shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300`}>
+          {/* Animated background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 rounded-full -translate-y-8 translate-x-8"></div>
+            <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/10 rounded-full translate-y-6 -translate-x-6"></div>
+          </div>
+          
+          {/* Card Header */}
+          <div className="flex justify-between items-center mb-4 relative z-10">
+            <div className="text-white font-bold text-lg tracking-wider">
+              STELLEX
+            </div>
+            <div className="text-white/70 text-sm">
+              {card.status === 'active' ? 'Активна' : 
+               card.status === 'blocked' ? 'Заблокирована' : 
+               card.status === 'awaiting_activation' ? 'Ожидает активации' : 'Ожидает активации'}
+            </div>
+          </div>
+
+          {/* Card Number */}
+          <div className="mb-4 relative z-10">
+            <div className="text-white text-lg font-bold">
+              {formatCardNumber(card.card_number, true)}
+            </div>
+          </div>
+
+          {/* Card Details */}
+          <div className="flex justify-between items-center mb-4 relative z-10">
+            <div className="text-white/70 text-sm">
+              {card.holder_name}
+            </div>
+            <div className="text-white/70 text-sm">
+              {formatExpiryDate(card.expiry_date, true)}
+            </div>
+          </div>
+
+          {/* Balance */}
+          <div className="relative z-10">
+            <div className="text-white/70 text-sm">Баланс</div>
+            <div className="text-white text-xl font-bold">
+              {card.balance.toLocaleString('ru-RU')} ₽
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Полная версия карты
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
