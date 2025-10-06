@@ -45,35 +45,48 @@ export default function Home() {
     try {
       // Получаем данные пользователя из Telegram
       const telegramUser = getTelegramUser();
-      if (!telegramUser) {
-        console.error('Telegram user not found');
-        setIsAppLoading(false);
-        return;
-      }
+      console.log('Telegram user:', telegramUser);
+      
+      // Fallback данные для тестирования в браузере
+      const fallbackUser = {
+        id: 123456789,
+        first_name: 'Иван',
+        last_name: 'Петров',
+        username: 'ivan_petrov',
+        language_code: 'ru'
+      };
+      
+      const userData = telegramUser || fallbackUser;
+      console.log('Using user data:', userData);
 
       // Проверяем, есть ли пользователь в базе данных
       const { data: existingUser, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('telegram_id', telegramUser.id)
+        .eq('telegram_id', userData.id)
         .single();
+
+      console.log('Existing user:', existingUser, 'Error:', userError);
 
       let currentUser: User;
       
       if (existingUser) {
         currentUser = existingUser;
+        console.log('Using existing user:', currentUser);
       } else {
         // Создаем нового пользователя
         const newUser: User = {
           id: generateId(),
-          telegram_id: telegramUser.id,
-          username: telegramUser.username || '',
-          first_name: telegramUser.first_name || '',
-          last_name: telegramUser.last_name || '',
+          telegram_id: userData.id,
+          username: userData.username || '',
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
           total_spent: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
+
+        console.log('Creating new user:', newUser);
 
         const { data: createdUser, error: createError } = await supabase
           .from('users')
@@ -83,11 +96,12 @@ export default function Home() {
 
         if (createError) {
           console.error('Error creating user:', createError);
-          setIsAppLoading(false);
-          return;
+          // Продолжаем работу даже если не удалось создать пользователя
+          currentUser = newUser;
+        } else {
+          currentUser = createdUser;
+          console.log('User created successfully:', currentUser);
         }
-
-        currentUser = createdUser;
       }
 
       setUser(currentUser);
@@ -99,10 +113,13 @@ export default function Home() {
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
 
+      console.log('Cards query result:', { userCards, cardsError });
+
       if (cardsError) {
         console.error('Error loading cards:', cardsError);
       } else {
         setCards(userCards || []);
+        console.log('Cards loaded:', userCards);
       }
 
     } catch (error) {
@@ -113,34 +130,49 @@ export default function Home() {
   };
 
   const handleCreateCard = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found for card creation');
+      showNotification('Пользователь не найден', 'error');
+      return;
+    }
     
+    console.log('Creating card for user:', user);
     setIsLoading(true);
     hapticFeedback('medium');
 
     try {
+      const requestData = {
+        user_id: user.id,
+        holder_name: `${user.first_name} ${user.last_name}`.trim() || 'ПОЛЬЗОВАТЕЛЬ',
+        api_key: process.env.NEXT_PUBLIC_API_KEY || 'test_key'
+      };
+      
+      console.log('Sending card creation request:', requestData);
+
       const response = await fetch('/api/cards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          user_id: user.id,
-          holder_name: `${user.first_name} ${user.last_name}`.trim() || 'ПОЛЬЗОВАТЕЛЬ',
-          api_key: process.env.NEXT_PUBLIC_API_KEY
-        }),
+        body: JSON.stringify(requestData),
       });
 
+      console.log('Card creation response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to create card');
+        const errorText = await response.text();
+        console.error('Card creation failed:', errorText);
+        throw new Error(`Failed to create card: ${errorText}`);
       }
 
       const newCard = await response.json();
+      console.log('Card created successfully:', newCard);
       setCards(prev => [newCard, ...prev]);
       showNotification('Карта успешно создана!', 'success');
     } catch (error) {
       console.error('Error creating card:', error);
-      showNotification('Ошибка при создании карты', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      showNotification(`Ошибка при создании карты: ${errorMessage}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -527,21 +559,53 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
                     <span className="text-gray-700">Уведомления</span>
-                    <div className="w-12 h-6 bg-purple-500 rounded-full relative">
+                    <button 
+                      onClick={() => showNotification('Настройки уведомлений', 'success')}
+                      className="w-12 h-6 bg-purple-500 rounded-full relative"
+                    >
                       <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
-                    </div>
+                    </button>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
                     <span className="text-gray-700">Биометрия</span>
-                    <div className="w-12 h-6 bg-gray-300 rounded-full relative">
+                    <button 
+                      onClick={() => showNotification('Биометрия недоступна', 'warning')}
+                      className="w-12 h-6 bg-gray-300 rounded-full relative"
+                    >
                       <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5"></div>
-                    </div>
+                    </button>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-gray-700">Темная тема</span>
-                    <div className="w-12 h-6 bg-gray-300 rounded-full relative">
+                    <button 
+                      onClick={() => showNotification('Темная тема в разработке', 'warning')}
+                      className="w-12 h-6 bg-gray-300 rounded-full relative"
+                    >
                       <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5"></div>
-                    </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Информация о пользователе */}
+              <div className="bg-white rounded-2xl p-4 shadow-lg">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Информация о пользователе</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Имя:</span>
+                    <span className="font-medium">{user ? `${user.first_name} ${user.last_name}`.trim() : 'Не загружено'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Telegram ID:</span>
+                    <span className="font-medium">{user?.telegram_id || 'Не загружено'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Username:</span>
+                    <span className="font-medium">@{user?.username || 'Не указан'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Карт создано:</span>
+                    <span className="font-medium">{cards.length}/3</span>
                   </div>
                 </div>
               </div>
