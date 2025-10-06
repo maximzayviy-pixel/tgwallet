@@ -1,4 +1,5 @@
 import { Card, CardType } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Генерация номера карты по типу
 export const generateCardNumber = (type: CardType): string => {
@@ -108,7 +109,7 @@ export const getCardTypeFromNumber = (number: string): CardType | null => {
 
 // Генерация уникального ID
 export const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return uuidv4();
 };
 
 // Форматирование суммы

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 // GET /api/cards - Получить карты пользователя
 export async function GET(request: NextRequest) {
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
 
 // Вспомогательные функции
 function generateId(): string {
-  return Math.random().toString(36).substr(2, 9)
+  return uuidv4()
 }
 
 function generateCardNumber(): string {
