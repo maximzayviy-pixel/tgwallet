@@ -13,6 +13,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import AdminNavigation from '@/components/AdminNavigation';
+import AuthGuard from '@/components/AuthGuard';
 
 interface CommissionSettings {
   cardCreationFee: number;
@@ -173,7 +174,11 @@ export default function AdminSettings() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard 
+      requiredKey="la0fEUlxBU80DFMzlZZc"
+      onAuthSuccess={() => {}}
+    >
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
@@ -306,6 +311,7 @@ export default function AdminSettings() {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

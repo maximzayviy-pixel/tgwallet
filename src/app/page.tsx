@@ -97,7 +97,7 @@ export default function Home() {
       // Симуляция создания карты
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const newCard = createCard('stellex', user?.id || '1');
+      const newCard = createCard('stellex', user?.id || '1', user?.firstName + ' ' + user?.lastName || 'Пользователь');
       setCards(prev => [...prev, newCard as Card]);
       setShowCreateForm(false);
       showNotification('Карта успешно создана!', 'success');

@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import AdminNavigation from '@/components/AdminNavigation';
+import AuthGuard from '@/components/AuthGuard';
 
 interface AdminStats {
   totalUsers: number;
@@ -35,6 +36,7 @@ export default function AdminDashboard() {
     pendingCards: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Симуляция загрузки данных
@@ -134,7 +136,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard 
+      requiredKey="la0fEUlxBU80DFMzlZZc"
+      onAuthSuccess={() => setIsAuthenticated(true)}
+    >
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
@@ -260,6 +266,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

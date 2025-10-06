@@ -19,8 +19,8 @@ const AdminNavigation: React.FC = () => {
     { href: '/admin/users', label: 'Пользователи', icon: Users },
     { href: '/admin/cards', label: 'Карты', icon: CreditCard },
     { href: '/admin/transactions', label: 'Транзакции', icon: BarChart3 },
+    { href: '/admin/developers', label: 'Разработчики', icon: Code },
     { href: '/admin/settings', label: 'Настройки', icon: Settings },
-    { href: '/developer', label: 'API', icon: Code },
   ];
 
   return (

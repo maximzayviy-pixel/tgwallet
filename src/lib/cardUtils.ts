@@ -57,15 +57,15 @@ export const generateExpiryDate = (): string => {
 };
 
 // Создание новой карты
-export const createCard = (type: CardType, holderName: string): Omit<Card, 'id' | 'createdAt' | 'lastUsed'> => {
+export const createCard = (type: CardType, userId: string, holderName?: string): Omit<Card, 'id' | 'createdAt' | 'lastUsed'> => {
   return {
     type,
     number: generateCardNumber(type),
-    holderName: holderName.toUpperCase(),
+    holderName: (holderName || 'ПОЛЬЗОВАТЕЛЬ').toUpperCase(),
     expiryDate: generateExpiryDate(),
     cvv: generateCVV(),
     balance: 0,
-    status: 'pending'
+    status: 'awaiting_activation'
   };
 };
 

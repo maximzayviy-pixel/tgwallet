@@ -19,6 +19,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import AdminNavigation from '@/components/AdminNavigation';
+import AuthGuard from '@/components/AuthGuard';
 
 interface ApiKey {
   id: string;
@@ -157,7 +158,11 @@ export default function DeveloperDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard 
+      requiredKey="developer_access_2024"
+      onAuthSuccess={() => {}}
+    >
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4">
@@ -447,6 +452,7 @@ export default function DeveloperDashboard() {
           </motion.div>
         </div>
       )}
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
