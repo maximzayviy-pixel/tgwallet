@@ -4,13 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap, Eye, EyeOff } from 'lucide-react';
 import VirtualCard from '@/components/VirtualCard';
-import CardCreationForm from '@/components/CardCreationForm';
 import TopUpModal from '@/components/TopUpModal';
 import TransferModal from '@/components/TransferModal';
 import TelegramStarsModal from '@/components/TelegramStarsModal';
 import BottomNavigation from '@/components/BottomNavigation';
 import SpaceLoader from '@/components/SpaceLoader';
-import { Card, CardCreationData, TopUpData, User } from '@/types';
+import { Card, TopUpData, User } from '@/types';
 import { createCard, generateId } from '@/lib/cardUtils';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -24,7 +23,7 @@ import {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  // Убираем форму создания карт - создаем автоматически
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showTelegramStarsModal, setShowTelegramStarsModal] = useState(false);
@@ -113,7 +112,7 @@ export default function Home() {
     }
   };
 
-  const handleCreateCard = async (data: CardCreationData) => {
+  const handleCreateCard = async () => {
     if (!user) return;
     
     setIsLoading(true);
@@ -138,7 +137,6 @@ export default function Home() {
 
       const newCard = await response.json();
       setCards(prev => [newCard, ...prev]);
-      setShowCreateForm(false);
       showNotification('Карта успешно создана!', 'success');
     } catch (error) {
       console.error('Error creating card:', error);
@@ -299,14 +297,24 @@ export default function Home() {
           <div className="px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">S</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden">
+                  {user && user.telegram_id ? (
+                    <img 
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name}&backgroundColor=8b5cf6&textColor=ffffff`}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-lg">S</span>
+                  )}
                 </div>
                 <div>
                   <div className="text-lg font-bold text-gray-900">
                     {user ? `${user.first_name} ${user.last_name}`.trim() : 'Пользователь'}
                   </div>
-                  <div className="text-sm text-gray-500">Stellex Bank</div>
+                  <div className="text-sm text-gray-500">
+                    {user ? `ID: ${user.telegram_id}` : 'Stellex Bank'}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -350,13 +358,23 @@ export default function Home() {
               <div className="bg-white rounded-2xl p-4 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Мои карты</h3>
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Создать карту</span>
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleCreateCard}
+                      disabled={isLoading || cards.length >= 3}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Создать карту</span>
+                    </button>
+                    <button
+                      onClick={() => setShowTelegramStarsModal(true)}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                    >
+                      <Star className="w-4 h-4" />
+                      <span>Пополнить звездами</span>
+                    </button>
+                  </div>
                 </div>
                 
                 {cards.length === 0 ? (
@@ -367,10 +385,11 @@ export default function Home() {
                     <h4 className="text-lg font-bold text-gray-900 mb-2">У вас пока нет карт</h4>
                     <p className="text-gray-500 text-sm mb-4">Создайте свою первую виртуальную карту</p>
                     <button
-                      onClick={() => setShowCreateForm(true)}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium"
+                      onClick={handleCreateCard}
+                      disabled={isLoading}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Создать карту
+                      {isLoading ? 'Создание...' : 'Создать карту'}
                     </button>
                   </div>
                 ) : (
@@ -431,6 +450,16 @@ export default function Home() {
                               className="bg-white/20 px-3 py-1 rounded-lg text-xs"
                             >
                               Пополнить
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCard(card);
+                                setShowTelegramStarsModal(true);
+                              }}
+                              className="bg-yellow-500/20 px-3 py-1 rounded-lg text-xs text-yellow-200"
+                            >
+                              ⭐ Звезды
                             </button>
                             <button
                               onClick={(e) => {
@@ -522,30 +551,6 @@ export default function Home() {
 
         {/* Modals */}
         <AnimatePresence>
-          {showCreateForm && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-              onClick={() => setShowCreateForm(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-md max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <CardCreationForm
-                  onSubmit={handleCreateCard}
-                  onCancel={() => setShowCreateForm(false)}
-                  isLoading={isLoading}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-
           {showTopUpModal && selectedCard && (
             <TopUpModal
               card={selectedCard}
@@ -572,9 +577,12 @@ export default function Home() {
           {/* Telegram Stars Modal */}
           {showTelegramStarsModal && (
             <TelegramStarsModal
-              cards={cards}
+              cards={selectedCard ? [selectedCard] : cards}
               onTopUp={handleTelegramStarsTopUp}
-              onClose={() => setShowTelegramStarsModal(false)}
+              onClose={() => {
+                setShowTelegramStarsModal(false);
+                setSelectedCard(null);
+              }}
               isLoading={isLoading}
               showNotification={(message) => showNotification(message, 'success')}
             />
