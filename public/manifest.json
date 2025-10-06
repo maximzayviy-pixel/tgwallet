@@ -1,0 +1,28 @@
+{
+  "name": "Виртуальные карты",
+  "short_name": "Cards",
+  "description": "Выпускайте виртуальные карты VISA и MasterCard прямо в Telegram",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#17212b",
+  "theme_color": "#64a9dc",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "ru",
+  "dir": "ltr"
+}
