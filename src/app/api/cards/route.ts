@@ -64,7 +64,15 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
-    if (!supabaseUrl || supabaseUrl.includes('placeholder') || !supabaseKey || supabaseKey.includes('placeholder')) {
+    console.log('Environment check:', { 
+      supabaseUrl: supabaseUrl ? 'set' : 'not set',
+      supabaseKey: supabaseKey ? 'set' : 'not set',
+      isPlaceholder: supabaseUrl?.includes('placeholder') || supabaseKey?.includes('placeholder'),
+      supabaseUrlValue: supabaseUrl,
+      supabaseKeyValue: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'not set'
+    })
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
       console.log('Supabase not configured, creating mock card')
       
       // Создаем mock карту для тестирования
@@ -81,6 +89,7 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString()
       }
       
+      console.log('Mock card created:', mockCard)
       return NextResponse.json(mockCard)
     }
 
