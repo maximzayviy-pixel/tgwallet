@@ -84,12 +84,8 @@ a {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 }
 
-.gradient-card-visa {
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
-}
-
-.gradient-card-mastercard {
-  background: linear-gradient(135deg, #eb3349 0%, #f45c43 50%, #ff6b6b 100%);
+.gradient-card-stellex {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 }
 
 /* Modern card styles */

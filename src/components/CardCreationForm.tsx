@@ -17,9 +17,9 @@ const CardCreationForm: React.FC<CardCreationFormProps> = ({
   isLoading = false
 }) => {
   const [formData, setFormData] = useState<CardCreationData>({
-    type: 'visa',
+    type: 'stellex',
     holderName: '',
-    paymentMethod: 'telegram'
+    paymentMethod: 'free'
   });
 
   const [errors, setErrors] = useState<Partial<CardCreationData>>({});
@@ -53,16 +53,10 @@ const CardCreationForm: React.FC<CardCreationFormProps> = ({
 
   const cardTypes: { type: CardType; name: string; icon: React.ReactNode; description: string }[] = [
     {
-      type: 'visa',
-      name: 'VISA',
-      icon: <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-sm">V</div>,
-      description: 'Принимается везде'
-    },
-    {
-      type: 'mastercard',
-      name: 'MasterCard',
-      icon: <div className="flex space-x-1"><div className="w-4 h-4 bg-red-500 rounded-full"></div><div className="w-4 h-4 bg-orange-500 rounded-full -ml-2"></div></div>,
-      description: 'Широкое покрытие'
+      type: 'stellex',
+      name: 'STELLEX',
+      icon: <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded flex items-center justify-center text-white font-bold text-sm">S</div>,
+      description: 'Цифровой банк будущего'
     }
   ];
 
@@ -73,10 +67,10 @@ const CardCreationForm: React.FC<CardCreationFormProps> = ({
       exit={{ opacity: 0, y: -20 }}
       className="glass-dark p-8 rounded-3xl shadow-modern-lg"
     >
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gradient text-glow mb-3">Выпуск виртуальной карты</h2>
-        <p className="text-white/70 text-lg">Создайте свою виртуальную карту за 1 999 ₽</p>
-      </div>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gradient text-glow mb-3">Выпуск виртуальной карты</h2>
+            <p className="text-white/70 text-lg">Создайте свою виртуальную карту Stellex Bank бесплатно</p>
+          </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Card Type Selection */}
@@ -136,38 +130,16 @@ const CardCreationForm: React.FC<CardCreationFormProps> = ({
           )}
         </div>
 
-        {/* Payment Method */}
-        <div>
-          <label className="block text-white font-medium mb-3">Способ оплаты</label>
-          <div className="space-y-2">
-            <label className="flex items-center space-x-3 p-4 rounded-xl bg-gray-600/10 hover:bg-gray-600/20 transition-colors cursor-pointer">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="telegram"
-                checked={formData.paymentMethod === 'telegram'}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="w-4 h-4 text-blue-400"
-                disabled={isLoading}
-              />
-              <div className="flex-1">
-                <div className="text-white font-medium">Telegram Stars</div>
-                <div className="text-gray-400 text-sm">Оплата через Telegram</div>
-              </div>
-              <div className="text-blue-400 font-bold">1 999 ⭐</div>
-            </label>
-          </div>
-        </div>
-
-        {/* Price Summary */}
-        <div className="bg-gray-600/10 rounded-xl p-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-400">Выпуск карты</span>
-            <span className="text-white font-medium">1 999 ₽</span>
-          </div>
-          <div className="flex justify-between items-center text-lg font-bold">
-            <span className="text-white">Итого</span>
-            <span className="text-blue-400">1 999 ₽</span>
+        {/* Free Card Notice */}
+        <div className="p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <Check className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="text-white font-bold">Бесплатный выпуск карты</div>
+              <div className="text-white/70 text-sm">Карта Stellex Bank создается мгновенно и бесплатно</div>
+            </div>
           </div>
         </div>
 

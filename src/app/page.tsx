@@ -232,22 +232,22 @@ export default function Home() {
               </div>
 
               {/* Create Card Button */}
-              <motion.button
-                whileHover={{ scale: 1.05, y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowCreateForm(true)}
-                className="w-full btn-modern text-lg font-bold flex items-center justify-center space-x-4 shadow-modern-lg relative overflow-hidden"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <Plus className="w-5 h-5" />
-                  </div>
-                  <span>Выпустить новую карту</span>
-                  <div className="glass rounded-full px-4 py-2 text-sm font-semibold">
-                    1 999 ₽
-                  </div>
-                </div>
-              </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full btn-modern text-lg font-bold flex items-center justify-center space-x-4 shadow-modern-lg relative overflow-hidden"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <Plus className="w-5 h-5" />
+                      </div>
+                      <span>Выпустить новую карту</span>
+                      <div className="glass rounded-full px-4 py-2 text-sm font-semibold">
+                        БЕСПЛАТНО
+                      </div>
+                    </div>
+                  </motion.button>
 
               {/* Cards List */}
               {cards.length === 0 ? (

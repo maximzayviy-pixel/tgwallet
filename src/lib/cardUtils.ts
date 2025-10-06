@@ -3,8 +3,7 @@ import { Card, CardType } from '@/types';
 // Генерация номера карты по типу
 export const generateCardNumber = (type: CardType): string => {
   const prefixes = {
-    visa: ['4'],
-    mastercard: ['5']
+    stellex: ['4']
   };
 
   const prefix = prefixes[type][0];
@@ -101,9 +100,7 @@ export const getCardTypeFromNumber = (number: string): CardType | null => {
   const cleanNumber = number.replace(/\s/g, '');
   
   if (cleanNumber.startsWith('4')) {
-    return 'visa';
-  } else if (cleanNumber.startsWith('5')) {
-    return 'mastercard';
+    return 'stellex';
   }
   
   return null;

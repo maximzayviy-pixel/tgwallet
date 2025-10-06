@@ -1,6 +1,6 @@
 export interface Card {
   id: string;
-  type: 'visa' | 'mastercard';
+  type: 'stellex';
   number: string;
   holderName: string;
   expiryDate: string;
@@ -30,9 +30,9 @@ export interface PaymentData {
 }
 
 export interface CardCreationData {
-  type: 'visa' | 'mastercard';
+  type: 'stellex';
   holderName: string;
-  paymentMethod: 'telegram' | 'card';
+  paymentMethod: 'free';
 }
 
 export interface TopUpData {
@@ -51,6 +51,6 @@ export interface Transaction {
   createdAt: Date;
 }
 
-export type CardType = 'visa' | 'mastercard';
+export type CardType = 'stellex';
 export type PaymentMethod = 'telegram' | 'card';
 export type TransactionType = 'topup' | 'payment' | 'card_creation';

@@ -34,32 +34,27 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
 
   const getCardGradient = (type: string) => {
     switch (type) {
-      case 'visa':
-        return 'gradient-card-visa';
-      case 'mastercard':
-        return 'gradient-card-mastercard';
+      case 'stellex':
+        return 'gradient-card-stellex';
       default:
-        return 'gradient-card';
+        return 'gradient-card-stellex';
     }
   };
 
   const getCardLogo = (type: string) => {
     switch (type) {
-      case 'visa':
+      case 'stellex':
         return (
           <div className="text-white font-bold text-xl tracking-wider">
-            VISA
-          </div>
-        );
-      case 'mastercard':
-        return (
-          <div className="flex items-center space-x-1">
-            <div className="w-8 h-8 bg-red-500 rounded-full"></div>
-            <div className="w-8 h-8 bg-orange-500 rounded-full -ml-4"></div>
+            STELLEX
           </div>
         );
       default:
-        return <CreditCard className="w-8 h-8 text-white" />;
+        return (
+          <div className="text-white font-bold text-xl tracking-wider">
+            STELLEX
+          </div>
+        );
     }
   };
 
