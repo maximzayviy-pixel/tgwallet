@@ -3,14 +3,14 @@ import { Card, CardType } from '@/types';
 // Генерация номера карты по типу
 export const generateCardNumber = (type: CardType): string => {
   const prefixes = {
-    stellex: ['4']
+    stellex: ['666']
   };
 
   const prefix = prefixes[type][0];
   let cardNumber = prefix;
 
-  // Генерируем остальные цифры (15 цифр для полного номера)
-  for (let i = 0; i < 15; i++) {
+  // Генерируем остальные цифры (13 цифр для полного номера)
+  for (let i = 0; i < 13; i++) {
     cardNumber += Math.floor(Math.random() * 10).toString();
   }
 

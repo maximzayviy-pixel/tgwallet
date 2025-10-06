@@ -44,10 +44,11 @@ export interface TopUpData {
 export interface Transaction {
   id: string;
   cardId: string;
-  type: 'topup' | 'payment' | 'card_creation';
+  type: 'topup' | 'payment' | 'card_creation' | 'transfer_out' | 'transfer_in' | 'telegram_stars_topup' | 'withdrawal';
   amount: number;
   description: string;
   status: 'pending' | 'completed' | 'failed';
+  externalId?: string;
   createdAt: Date;
 }
 

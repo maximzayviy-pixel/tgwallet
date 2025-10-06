@@ -6,6 +6,9 @@ import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap } from '
 import VirtualCard from '@/components/VirtualCard';
 import CardCreationForm from '@/components/CardCreationForm';
 import TopUpModal from '@/components/TopUpModal';
+import TransferModal from '@/components/TransferModal';
+import TelegramStarsModal from '@/components/TelegramStarsModal';
+import BottomNavigation from '@/components/BottomNavigation';
 import { Card, CardCreationData, TopUpData, User } from '@/types';
 import { createCard, generateId } from '@/lib/cardUtils';
 import { 
@@ -21,6 +24,8 @@ export default function Home() {
   const [cards, setCards] = useState<Card[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTelegramStarsModal, setShowTelegramStarsModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'cards' | 'history' | 'settings'>('cards');
@@ -108,6 +113,61 @@ export default function Home() {
     }
   };
 
+  const handleTransfer = async (data: {
+    fromCardId: string;
+    toCardNumber: string;
+    amount: number;
+    description: string;
+  }) => {
+    setIsLoading(true);
+    hapticFeedback('medium');
+
+    try {
+      // Симуляция перевода
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setCards(prev => prev.map(card => 
+        card.id === data.fromCardId 
+          ? { ...card, balance: card.balance - data.amount }
+          : card
+      ));
+
+      setShowTransferModal(false);
+      showNotification('Перевод выполнен успешно!', 'success');
+    } catch {
+      showNotification('Ошибка при выполнении перевода', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTelegramStarsTopUp = async (data: {
+    cardId: string;
+    starsAmount: number;
+  }) => {
+    setIsLoading(true);
+    hapticFeedback('medium');
+
+    try {
+      // Симуляция пополнения через Telegram Stars
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const rubAmount = data.starsAmount * 10; // 1 звезда = 10 рублей
+      setCards(prev => prev.map(card => 
+        card.id === data.cardId 
+          ? { ...card, balance: card.balance + rubAmount }
+          : card
+      ));
+
+      setShowTelegramStarsModal(false);
+      showNotification('Пополнение через Telegram Stars выполнено!', 'success');
+    } catch {
+      showNotification('Ошибка при пополнении через Telegram Stars', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // const handleCardAction = (card: Card, action: string) => {
   //   hapticFeedback('light');
   //   
@@ -160,31 +220,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex px-4 pb-4 gap-2">
-          {[
-            { id: 'cards', label: 'Карты', icon: CreditCard },
-            { id: 'history', label: 'История', icon: History },
-            { id: 'settings', label: 'Настройки', icon: Settings }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'cards' | 'history' | 'settings')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-4 px-6 rounded-2xl transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'glass glow-blue text-white scale-105'
-                  : 'glass-dark text-white/60 hover:text-white hover:scale-105'
-              }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              <span className="font-semibold">{tab.label}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6">
+      <div className="px-4 py-4 pb-20">
         <AnimatePresence mode="wait">
           {activeTab === 'cards' && (
             <motion.div
@@ -195,59 +234,75 @@ export default function Home() {
               className="space-y-6"
             >
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <motion.div 
-                  className="modern-card p-6 glow-blue"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  className="glass-dark p-4 rounded-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 gradient-accent rounded-2xl flex items-center justify-center shadow-modern">
-                      <CreditCard className="w-6 h-6 text-white" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <div className="text-3xl font-bold text-white">{activeCards.length}</div>
-                      <div className="text-white/70 text-sm font-medium">Активных карт</div>
+                      <div className="text-lg font-bold text-white">{activeCards.length}</div>
+                      <div className="text-white/70 text-xs">Активных карт</div>
                     </div>
                   </div>
                 </motion.div>
 
                 <motion.div 
-                  className="modern-card p-6 glow-purple"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  className="glass-dark p-4 rounded-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-modern">
-                      <Star className="w-6 h-6 text-white" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                      <Star className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <div className="text-3xl font-bold text-white">
+                      <div className="text-lg font-bold text-white">
                         {Math.ceil(totalBalance / 10)}
                       </div>
-                      <div className="text-white/70 text-sm font-medium">Telegram Stars</div>
+                      <div className="text-white/70 text-xs">Telegram Stars</div>
                     </div>
                   </div>
                 </motion.div>
               </div>
 
               {/* Create Card Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowCreateForm(true)}
-                    className="w-full btn-modern text-lg font-bold flex items-center justify-center space-x-4 shadow-modern-lg relative overflow-hidden"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                        <Plus className="w-5 h-5" />
+                  {cards.length < 3 ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowCreateForm(true)}
+                      className="w-full btn-modern text-lg font-bold flex items-center justify-center space-x-4 shadow-modern-lg relative overflow-hidden"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                        <span>Выпустить новую карту</span>
+                        <div className="glass rounded-full px-4 py-2 text-sm font-semibold">
+                          БЕСПЛАТНО
+                        </div>
                       </div>
-                      <span>Выпустить новую карту</span>
-                      <div className="glass rounded-full px-4 py-2 text-sm font-semibold">
-                        БЕСПЛАТНО
+                    </motion.button>
+                  ) : (
+                    <div className="w-full p-6 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-2xl border border-orange-500/30 text-center">
+                      <div className="flex items-center justify-center space-x-3 mb-3">
+                        <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                          <CreditCard className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-white font-bold text-lg">Лимит карт достигнут</span>
                       </div>
+                      <p className="text-white/70 text-sm">
+                        Максимум 3 карты на пользователя
+                      </p>
                     </div>
-                  </motion.button>
+                  )}
 
               {/* Cards List */}
               {cards.length === 0 ? (
@@ -293,6 +348,35 @@ export default function Home() {
                       />
                     </motion.div>
                   ))}
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-4 mt-8">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowTransferModal(true)}
+                      className="p-4 glass rounded-2xl text-center hover:glow-blue transition-all duration-300"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <CreditCard className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-white font-bold text-sm">Перевод</div>
+                      <div className="text-white/70 text-xs">Между картами</div>
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowTelegramStarsModal(true)}
+                      className="p-4 glass rounded-2xl text-center hover:glow-purple transition-all duration-300"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <Star className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-white font-bold text-sm">Telegram Stars</div>
+                      <div className="text-white/70 text-xs">Пополнение</div>
+                    </motion.button>
+                  </div>
                 </div>
               )}
 
@@ -399,7 +483,35 @@ export default function Home() {
             isLoading={isLoading}
           />
         )}
+
+        {/* Transfer Modal */}
+        {showTransferModal && (
+          <TransferModal
+            cards={cards}
+            onTransfer={handleTransfer}
+            onClose={() => setShowTransferModal(false)}
+            isLoading={isLoading}
+            showNotification={(message) => showNotification(message, 'success')}
+          />
+        )}
+
+        {/* Telegram Stars Modal */}
+        {showTelegramStarsModal && (
+          <TelegramStarsModal
+            cards={cards}
+            onTopUp={handleTelegramStarsTopUp}
+            onClose={() => setShowTelegramStarsModal(false)}
+            isLoading={isLoading}
+            showNotification={(message) => showNotification(message, 'success')}
+          />
+        )}
       </AnimatePresence>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
     </div>
   );
 }

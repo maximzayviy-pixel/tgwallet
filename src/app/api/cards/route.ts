@@ -89,6 +89,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Проверяем лимит карт (максимум 3)
+    const { data: existingCards, error: cardsCountError } = await supabase
+      .from('cards')
+      .select('id')
+      .eq('user_id', user.id)
+
+    if (cardsCountError) {
+      return NextResponse.json({ error: 'Failed to check card limit' }, { status: 500 })
+    }
+
+    if (existingCards && existingCards.length >= 3) {
+      return NextResponse.json({ error: 'Maximum 3 cards allowed per user' }, { status: 400 })
+    }
+
     // Генерируем данные карты
     const cardNumber = generateCardNumber()
     const expiryDate = generateExpiryDate()
