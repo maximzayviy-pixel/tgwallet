@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { user_id, holder_name, api_key } = body
 
+    console.log('Card creation request:', { user_id, holder_name, api_key })
+
     if (!api_key) {
       return NextResponse.json({ error: 'API key required' }, { status: 401 })
     }
@@ -58,13 +60,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'user_id and holder_name required' }, { status: 400 })
     }
 
+    // Проверяем, настроен ли Supabase
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || supabaseUrl.includes('placeholder') || !supabaseKey || supabaseKey.includes('placeholder')) {
+      console.log('Supabase not configured, creating mock card')
+      
+      // Создаем mock карту для тестирования
+      const mockCard = {
+        id: generateId(),
+        user_id: user_id,
+        card_number: generateCardNumber(),
+        holder_name: holder_name.toUpperCase(),
+        expiry_date: generateExpiryDate(),
+        cvv: generateCVV(),
+        balance: 0,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      return NextResponse.json(mockCard)
+    }
+
     // Проверяем лимит карт (максимум 3)
     const { data: existingCards, error: cardsCountError } = await supabase
       .from('cards')
       .select('id')
       .eq('user_id', user_id)
 
+    console.log('Cards count check:', { existingCards, cardsCountError })
+
     if (cardsCountError) {
+      console.error('Cards count error:', cardsCountError)
       return NextResponse.json({ error: 'Failed to check card limit' }, { status: 500 })
     }
 
@@ -93,6 +122,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (cardError) {
+      console.error('Card creation error:', cardError)
       return NextResponse.json({ error: 'Failed to create card' }, { status: 500 })
     }
 
@@ -110,11 +140,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(card)
   } catch (error) {
+    console.error('Card creation error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // Вспомогательные функции
+function generateId(): string {
+  return Math.random().toString(36).substr(2, 9)
+}
+
 function generateCardNumber(): string {
   let cardNumber = '666' // Stellex Bank prefix
   for (let i = 0; i < 13; i++) {

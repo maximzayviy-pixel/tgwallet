@@ -59,6 +59,31 @@ export default function Home() {
       const userData = telegramUser || fallbackUser;
       console.log('Using user data:', userData);
 
+      // Проверяем, настроен ли Supabase
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || supabaseUrl.includes('placeholder') || !supabaseKey || supabaseKey.includes('placeholder')) {
+        console.log('Supabase not configured, using mock data');
+        
+        // Создаем mock пользователя
+        const mockUser: User = {
+          id: generateId(),
+          telegram_id: userData.id,
+          username: userData.username || '',
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          total_spent: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setUser(mockUser);
+        setCards([]); // Пустой массив карт для начала
+        setIsAppLoading(false);
+        return;
+      }
+
       // Проверяем, есть ли пользователь в базе данных
       const { data: existingUser, error: userError } = await supabase
         .from('users')
