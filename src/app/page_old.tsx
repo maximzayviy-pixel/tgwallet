@@ -176,7 +176,7 @@ export default function Home() {
       // Симуляция пополнения через Telegram Stars
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      const rubAmount = data.starsAmount * 1; // 1 звезда = 1 рубль
+      const rubAmount = data.starsAmount * 10; // 1 звезда = 10 рублей
       setCards(prev => prev.map(card => 
         card.id === data.cardId 
           ? { ...card, balance: card.balance + rubAmount }

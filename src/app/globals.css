@@ -83,11 +83,11 @@ a {
 
 /* Modern gradient backgrounds */
 .gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
 }
 
 .gradient-bg-dark {
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
 }
 
 .gradient-accent {
@@ -95,11 +95,11 @@ a {
 }
 
 .gradient-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
 }
 
 .gradient-card-stellex {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
 }
 
 /* Optimized card styles for mobile */
@@ -135,7 +135,7 @@ a {
 
 /* Optimized buttons for mobile */
 .btn-modern {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   border: none;
   border-radius: 12px;
   padding: 12px 24px;
@@ -144,7 +144,7 @@ a {
   font-size: 14px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .btn-modern:hover {

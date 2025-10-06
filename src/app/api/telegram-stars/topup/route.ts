@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
     }
 
-    // Конвертируем Telegram Stars в рубли (1 звезда = 10 рублей)
-    const rubAmount = stars_amount * 10
+    // Конвертируем Telegram Stars в рубли (1 звезда = 1 рубль)
+    const rubAmount = stars_amount * 1
 
     // Получаем карту
     const { data: card, error: cardError } = await supabase
