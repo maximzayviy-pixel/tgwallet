@@ -197,80 +197,40 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <div className="sticky top-0 z-10 glass-dark border-b border-white/10">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="animate-fade-in-up">
-              <h1 className="text-3xl font-bold text-gradient text-glow">Виртуальные карты</h1>
-              <p className="text-white/70 text-sm mt-1">
-                {user ? `Привет, ${user.firstName}! 👋` : 'Загрузка...'}
-              </p>
-            </div>
-            <div className="flex items-center space-x-3 animate-slide-in-right">
-              <div className="text-right">
-                <div className="text-white/60 text-sm font-medium">Общий баланс</div>
-                <div className="text-2xl font-bold text-gradient text-glow">
-                  {totalBalance.toLocaleString('ru-RU')} ₽
-                </div>
-              </div>
-              <div className="p-3 glass rounded-2xl glow-blue">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
+      {/* Simple gradient header */}
+      <div className="h-32 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
       </div>
 
       {/* Main Content */}
       <div className="px-4 py-4 pb-20">
-        <AnimatePresence mode="wait">
-          {activeTab === 'cards' && (
-            <motion.div
-              key="cards"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <motion.div 
-                  className="glass-dark p-4 rounded-xl"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 gradient-accent rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-white">{activeCards.length}</div>
-                      <div className="text-white/70 text-xs">Активных карт</div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  className="glass-dark p-4 rounded-xl"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
-                      <Star className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-white">
-                        {Math.ceil(totalBalance / 10)}
-                      </div>
-                      <div className="text-white/70 text-xs">Telegram Stars</div>
-                    </div>
-                  </div>
-                </motion.div>
+        {/* Total Balance Card */}
+        <div className="mb-6">
+          <motion.div 
+            className="glass-dark p-6 rounded-2xl text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex items-center justify-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
               </div>
+              <div className="text-white/70 text-lg">Общий баланс</div>
+            </div>
+            <div className="text-3xl font-bold text-white mb-2">
+              {totalBalance.toLocaleString('ru-RU')} ₽
+            </div>
+            <div className="text-white/60 text-sm">
+              {cards.length} {cards.length === 1 ? 'карта' : cards.length < 5 ? 'карты' : 'карт'}
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="space-y-6">
+          {activeTab === 'cards' && (
+            <div className="space-y-6">
 
               {/* Create Card Button */}
                   {cards.length < 3 ? (
@@ -405,17 +365,11 @@ export default function Home() {
                   <div className="text-white/70 text-sm">Выпуск за секунды</div>
                 </motion.div>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'history' && (
-            <motion.div
-              key="history"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               <div className="text-center py-12">
                 <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">История операций</h3>
@@ -423,17 +377,11 @@ export default function Home() {
                   Здесь будет отображаться история ваших операций
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'settings' && (
-            <motion.div
-              key="settings"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               <div className="text-center py-12">
                 <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Настройки</h3>
@@ -441,9 +389,9 @@ export default function Home() {
                   Здесь будут настройки приложения
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </div>
 
       {/* Modals */}

@@ -93,7 +93,8 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
               </div>
               <div className="text-white/70 text-sm font-medium">
                 {card.status === 'active' ? 'Активна' : 
-                 card.status === 'blocked' ? 'Заблокирована' : 'Ожидает активации'}
+                 card.status === 'blocked' ? 'Заблокирована' : 
+                 card.status === 'awaiting_activation' ? 'Ожидает активации' : 'Ожидает активации'}
               </div>
             </div>
           </div>
@@ -155,28 +156,45 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
 
         {/* Card Actions */}
         {showDetails && (
-          <div className="mt-8 flex space-x-3 relative z-10">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold backdrop-blur-sm"
-            >
-              Пополнить
-            </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold backdrop-blur-sm"
-            >
-              История
-            </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="p-3 bg-white/20 hover:bg-white/30 text-white rounded-2xl transition-all duration-300 backdrop-blur-sm"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </motion.button>
+          <div className="mt-8 relative z-10">
+            {card.status === 'awaiting_activation' ? (
+              <div className="text-center">
+                <div className="text-white/70 text-sm mb-4">
+                  Карта создана! Проверьте Telegram для активации
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold"
+                >
+                  Активировать карту
+                </motion.button>
+              </div>
+            ) : (
+              <div className="flex space-x-3">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold backdrop-blur-sm"
+                >
+                  Пополнить
+                </motion.button>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold backdrop-blur-sm"
+                >
+                  История
+                </motion.button>
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 bg-white/20 hover:bg-white/30 text-white rounded-2xl transition-all duration-300 backdrop-blur-sm"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </motion.button>
+              </div>
+            )}
           </div>
         )}
       </div>

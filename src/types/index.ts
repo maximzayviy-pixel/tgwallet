@@ -6,7 +6,7 @@ export interface Card {
   expiryDate: string;
   cvv: string;
   balance: number;
-  status: 'active' | 'blocked' | 'pending';
+  status: 'active' | 'blocked' | 'pending' | 'awaiting_activation';
   createdAt: Date;
   lastUsed?: Date;
 }
