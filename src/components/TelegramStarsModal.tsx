@@ -1,14 +1,10 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, Star, CreditCard, AlertCircle } from 'lucide-react'
+import { Card } from '@/types'
 
 interface TelegramStarsModalProps {
-  cards: Array<{
-    id: string
-    number: string
-    balance: number
-    status: string
-  }>
+  cards: Card[]
   onTopUp: (data: {
     cardId: string
     starsAmount: number
@@ -80,7 +76,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
   }
 
   const activeCards = cards.filter(card => card.status === 'active')
-  const rubAmount = formData.starsAmount ? parseInt(formData.starsAmount) * 10 : 0
+  const rubAmount = formData.starsAmount ? parseInt(formData.starsAmount) * 1 : 0
 
   return (
     <motion.div
@@ -120,7 +116,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
               <option value="">Выберите карту</option>
               {activeCards.map((card) => (
                 <option key={card.id} value={card.id}>
-                  {card.number.slice(-4)} - {card.balance.toLocaleString('ru-RU')} ₽
+                  {card.card_number.slice(-4)} - {card.balance.toLocaleString('ru-RU')} ₽
                 </option>
               ))}
             </select>
@@ -177,7 +173,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           {/* Информация о курсе */}
           <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30">
             <div className="text-white/80 text-sm text-center">
-              Курс: 1 ⭐ = 10 ₽
+              Курс: 1 ⭐ = 1 ₽
             </div>
           </div>
 

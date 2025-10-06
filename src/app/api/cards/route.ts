@@ -48,52 +48,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { telegram_id, holder_name, api_key } = body
+    const { user_id, holder_name, api_key } = body
 
     if (!api_key) {
       return NextResponse.json({ error: 'API key required' }, { status: 401 })
     }
 
-    if (!telegram_id || !holder_name) {
-      return NextResponse.json({ error: 'telegram_id and holder_name required' }, { status: 400 })
-    }
-
-    // Получаем или создаем пользователя
-    let { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('telegram_id', telegram_id)
-      .single()
-
-    if (userError && userError.code === 'PGRST116') {
-      // Пользователь не найден, создаем нового
-      const { data: newUser, error: createUserError } = await supabase
-        .from('users')
-        .insert({
-          telegram_id,
-          first_name: holder_name.split(' ')[0] || 'User',
-          last_name: holder_name.split(' ').slice(1).join(' ') || null
-        })
-        .select('id')
-        .single()
-
-      if (createUserError || !newUser) {
-        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
-      }
-      user = newUser
-    } else if (userError) {
-      return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 })
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user_id || !holder_name) {
+      return NextResponse.json({ error: 'user_id and holder_name required' }, { status: 400 })
     }
 
     // Проверяем лимит карт (максимум 3)
     const { data: existingCards, error: cardsCountError } = await supabase
       .from('cards')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', user_id)
 
     if (cardsCountError) {
       return NextResponse.json({ error: 'Failed to check card limit' }, { status: 500 })
@@ -112,7 +81,7 @@ export async function POST(request: NextRequest) {
     const { data: card, error: cardError } = await supabase
       .from('cards')
       .insert({
-        user_id: user.id,
+        user_id: user_id,
         card_number: cardNumber,
         holder_name: holder_name.toUpperCase(),
         expiry_date: expiryDate,
@@ -132,14 +101,14 @@ export async function POST(request: NextRequest) {
       .from('transactions')
       .insert({
         card_id: card.id,
-        user_id: user.id,
+        user_id: user_id,
         type: 'card_creation',
         amount: 0,
         description: 'Card created',
         status: 'completed'
       })
 
-    return NextResponse.json({ card })
+    return NextResponse.json(card)
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -147,8 +116,8 @@ export async function POST(request: NextRequest) {
 
 // Вспомогательные функции
 function generateCardNumber(): string {
-  let cardNumber = '4' // Stellex Bank prefix
-  for (let i = 0; i < 15; i++) {
+  let cardNumber = '666' // Stellex Bank prefix
+  for (let i = 0; i < 13; i++) {
     cardNumber += Math.floor(Math.random() * 10).toString()
   }
   return cardNumber

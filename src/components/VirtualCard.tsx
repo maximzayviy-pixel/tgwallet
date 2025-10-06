@@ -75,7 +75,7 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
       transition={{ duration: 0.5 }}
       className={`relative ${className}`}
     >
-      <div className={`${getCardGradient(card.type)} rounded-3xl p-8 shadow-modern-lg modern-card glow-blue relative overflow-hidden`}>
+      <div className={`${getCardGradient('stellex')} rounded-3xl p-8 shadow-modern-lg modern-card glow-blue relative overflow-hidden`}>
         {/* Animated background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -translate-y-16 translate-x-16"></div>
@@ -85,11 +85,11 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
         <div className="flex justify-between items-start mb-8 relative z-10">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              {getCardLogo(card.type)}
+              {getCardLogo('stellex')}
             </div>
             <div>
               <div className="text-white/90 text-lg font-bold">
-                {card.type.toUpperCase()}
+                STELLEX
               </div>
               <div className="text-white/70 text-sm font-medium">
                 {card.status === 'active' ? 'Активна' : 
@@ -113,13 +113,13 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
           <div className="text-white/70 text-sm mb-3 font-medium">Номер карты</div>
           <div className="flex items-center justify-between">
             <div className="card-number text-white text-2xl font-bold">
-              {formatCardNumber(card.number, isDetailsVisible)}
+              {formatCardNumber(card.card_number, isDetailsVisible)}
             </div>
             {isDetailsVisible && (
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => handleCopy(card.number)}
+                onClick={() => handleCopy(card.card_number)}
                 className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-300 backdrop-blur-sm"
               >
                 <Copy className="w-5 h-5 text-white" />
@@ -133,13 +133,13 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
           <div className="flex-1">
             <div className="text-white/70 text-sm mb-2 font-medium">Владелец</div>
             <div className="text-white font-bold text-lg">
-              {isDetailsVisible ? card.holderName : '•••• ••••'}
+              {isDetailsVisible ? card.holder_name : '•••• ••••'}
             </div>
           </div>
           <div className="text-right">
             <div className="text-white/70 text-sm mb-2 font-medium">Срок действия</div>
             <div className="text-white font-bold text-lg">
-              {formatExpiryDate(card.expiryDate, isDetailsVisible)}
+              {formatExpiryDate(card.expiry_date, isDetailsVisible)}
             </div>
           </div>
         </div>

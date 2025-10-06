@@ -1,25 +1,26 @@
 export interface Card {
   id: string;
-  type: 'stellex';
-  number: string;
-  holderName: string;
-  expiryDate: string;
+  user_id: string;
+  card_number: string;
+  holder_name: string;
+  expiry_date: string;
   cvv: string;
   balance: number;
   status: 'active' | 'blocked' | 'pending' | 'awaiting_activation';
-  createdAt: Date;
-  lastUsed?: Date;
+  created_at: string;
+  updated_at: string;
+  last_used?: string;
 }
 
 export interface User {
   id: string;
-  telegramId: number;
+  telegram_id: number;
   username?: string;
-  firstName: string;
-  lastName?: string;
-  cards: Card[];
-  totalSpent: number;
-  createdAt: Date;
+  first_name: string;
+  last_name?: string;
+  total_spent: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PaymentData {

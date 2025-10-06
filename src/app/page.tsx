@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap } from 'lucide-react';
+import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap, Eye, EyeOff } from 'lucide-react';
 import VirtualCard from '@/components/VirtualCard';
 import CardCreationForm from '@/components/CardCreationForm';
 import TopUpModal from '@/components/TopUpModal';
@@ -10,11 +10,9 @@ import TransferModal from '@/components/TransferModal';
 import TelegramStarsModal from '@/components/TelegramStarsModal';
 import BottomNavigation from '@/components/BottomNavigation';
 import SpaceLoader from '@/components/SpaceLoader';
-import AccountCard from '@/components/AccountCard';
-import QuickTransfer from '@/components/QuickTransfer';
-import CustomizeScreen from '@/components/CustomizeScreen';
 import { Card, CardCreationData, TopUpData, User } from '@/types';
 import { createCard, generateId } from '@/lib/cardUtils';
+import { supabase } from '@/lib/supabase';
 import { 
   initTelegramWebApp, 
   setupTelegramTheme, 
@@ -34,74 +32,116 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'cards' | 'history' | 'settings'>('cards');
   const [isAppLoading, setIsAppLoading] = useState(true);
-  const [expandedAccount, setExpandedAccount] = useState<string | null>(null);
-  
-  // Mock data for accounts
-  const accounts = [
-    { id: '1', name: 'Текущий счёт', number: '--3109', balance: 16456, type: 'current' as const },
-    { id: '2', name: 'Stellex-Счёт', number: '--1238', balance: 64000, type: 'savings' as const },
-  ];
-  
-  // Mock data for contacts
-  const contacts = [
-    { id: '1', name: 'Вячеслав', phone: '+7 999 123-45-67' },
-    { id: '2', name: 'Татьяна', phone: '+7 999 234-56-78' },
-    { id: '3', name: 'Павел', phone: '+7 999 345-67-89' },
-  ];
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [showCardDetails, setShowCardDetails] = useState(false);
 
   // Инициализация при загрузке
   useEffect(() => {
     initTelegramWebApp();
     setupTelegramTheme();
-    
-    // Получаем данные пользователя из Telegram
-    const telegramUser = getTelegramUser();
-    if (telegramUser) {
-      const newUser: User = {
-        id: generateId(),
-        telegramId: telegramUser.id,
-        username: telegramUser.username,
-        firstName: telegramUser.first_name,
-        lastName: telegramUser.last_name,
-        cards: [],
-        totalSpent: 0,
-        createdAt: new Date()
-      };
-      setUser(newUser);
-    }
-
-    // Загружаем карты из localStorage (в реальном приложении - с сервера)
-    const savedCards = localStorage.getItem('userCards');
-    if (savedCards) {
-      setCards(JSON.parse(savedCards));
-    }
-
-    // Завершаем загрузку приложения
-    setTimeout(() => {
-      setIsAppLoading(false);
-    }, 3000);
+    loadUserData();
   }, []);
 
-  // Сохраняем карты в localStorage при изменении
-  useEffect(() => {
-    if (cards.length > 0) {
-      localStorage.setItem('userCards', JSON.stringify(cards));
+  const loadUserData = async () => {
+    try {
+      // Получаем данные пользователя из Telegram
+      const telegramUser = getTelegramUser();
+      if (!telegramUser) {
+        console.error('Telegram user not found');
+        setIsAppLoading(false);
+        return;
+      }
+
+      // Проверяем, есть ли пользователь в базе данных
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('telegram_id', telegramUser.id)
+        .single();
+
+      let currentUser: User;
+      
+      if (existingUser) {
+        currentUser = existingUser;
+      } else {
+        // Создаем нового пользователя
+        const newUser: User = {
+          id: generateId(),
+          telegram_id: telegramUser.id,
+          username: telegramUser.username || '',
+          first_name: telegramUser.first_name || '',
+          last_name: telegramUser.last_name || '',
+          total_spent: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: createdUser, error: createError } = await supabase
+          .from('users')
+          .insert([newUser])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating user:', createError);
+          setIsAppLoading(false);
+          return;
+        }
+
+        currentUser = createdUser;
+      }
+
+      setUser(currentUser);
+
+      // Загружаем карты пользователя
+      const { data: userCards, error: cardsError } = await supabase
+        .from('cards')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (cardsError) {
+        console.error('Error loading cards:', cardsError);
+      } else {
+        setCards(userCards || []);
+      }
+
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setIsAppLoading(false);
     }
-  }, [cards]);
+  };
 
   const handleCreateCard = async (data: CardCreationData) => {
+    if (!user) return;
+    
     setIsLoading(true);
     hapticFeedback('medium');
 
     try {
-      // Симуляция создания карты
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/cards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          holder_name: `${user.first_name} ${user.last_name}`.trim() || 'ПОЛЬЗОВАТЕЛЬ',
+          api_key: process.env.NEXT_PUBLIC_API_KEY
+        }),
+      });
 
-      const newCard = createCard('stellex', user?.id || '1', user?.firstName + ' ' + user?.lastName || 'Пользователь');
-      setCards(prev => [...prev, newCard as Card]);
+      if (!response.ok) {
+        throw new Error('Failed to create card');
+      }
+
+      const newCard = await response.json();
+      setCards(prev => [newCard, ...prev]);
       setShowCreateForm(false);
       showNotification('Карта успешно создана!', 'success');
-    } catch {
+    } catch (error) {
+      console.error('Error creating card:', error);
       showNotification('Ошибка при создании карты', 'error');
     } finally {
       setIsLoading(false);
@@ -113,19 +153,35 @@ export default function Home() {
     hapticFeedback('medium');
 
     try {
-      // Симуляция пополнения
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch(`/api/cards/${data.cardId}/topup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: data.amount,
+          api_key: process.env.NEXT_PUBLIC_API_KEY
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error('Failed to top up card');
+      }
+
+      const result = await response.json();
+      
+      // Обновляем баланс карты
       setCards(prev => prev.map(card =>
         card.id === data.cardId
-          ? { ...card, balance: card.balance + data.amount }
+          ? { ...card, balance: result.new_balance }
           : card
       ));
 
       setShowTopUpModal(false);
       setSelectedCard(null);
       showNotification('Карта успешно пополнена!', 'success');
-    } catch {
+    } catch (error) {
+      console.error('Error topping up card:', error);
       showNotification('Ошибка при пополнении карты', 'error');
     } finally {
       setIsLoading(false);
@@ -142,18 +198,38 @@ export default function Home() {
     hapticFeedback('medium');
 
     try {
-      // Симуляция перевода
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from_card_id: data.fromCardId,
+          to_card_number: data.toCardNumber,
+          amount: data.amount,
+          description: data.description,
+          api_key: process.env.NEXT_PUBLIC_API_KEY
+        }),
+      });
 
-      setCards(prev => prev.map(card =>
-        card.id === data.fromCardId
-          ? { ...card, balance: card.balance - data.amount }
-          : card
-      ));
+      if (!response.ok) {
+        throw new Error('Failed to transfer');
+      }
+
+      const result = await response.json();
+      
+      // Обновляем балансы карт
+      setCards(prev => prev.map(card => {
+        if (card.id === data.fromCardId) {
+          return { ...card, balance: result.from_card_balance };
+        }
+        return card;
+      }));
 
       setShowTransferModal(false);
       showNotification('Перевод выполнен успешно!', 'success');
-    } catch {
+    } catch (error) {
+      console.error('Error transferring:', error);
       showNotification('Ошибка при выполнении перевода', 'error');
     } finally {
       setIsLoading(false);
@@ -164,23 +240,42 @@ export default function Home() {
     cardId: string;
     starsAmount: number;
   }) => {
+    if (!user) return;
+    
     setIsLoading(true);
     hapticFeedback('medium');
 
     try {
-      // Симуляция пополнения через Telegram Stars
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/telegram-stars/topup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          card_id: data.cardId,
+          stars_amount: data.starsAmount,
+          telegram_user_id: user.telegram_id,
+          api_key: process.env.NEXT_PUBLIC_API_KEY
+        }),
+      });
 
-      const rubAmount = data.starsAmount * 1; // 1 звезда = 1 рубль
+      if (!response.ok) {
+        throw new Error('Failed to top up with Telegram Stars');
+      }
+
+      const result = await response.json();
+      
+      // Обновляем баланс карты
       setCards(prev => prev.map(card =>
         card.id === data.cardId
-          ? { ...card, balance: card.balance + rubAmount }
+          ? { ...card, balance: result.new_balance }
           : card
       ));
 
       setShowTelegramStarsModal(false);
       showNotification('Пополнение через Telegram Stars выполнено!', 'success');
-    } catch {
+    } catch (error) {
+      console.error('Error topping up with Telegram Stars:', error);
       showNotification('Ошибка при пополнении через Telegram Stars', 'error');
     } finally {
       setIsLoading(false);
@@ -209,7 +304,7 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="text-lg font-bold text-gray-900">
-                    {user ? user.firstName : 'Иван'}
+                    {user ? `${user.first_name} ${user.last_name}`.trim() : 'Пользователь'}
                   </div>
                   <div className="text-sm text-gray-500">Stellex Bank</div>
                 </div>
@@ -235,54 +330,35 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="px-4 py-4 pb-20 space-y-6">
-          {/* Accounts Section */}
-          <div className="space-y-3">
-            {accounts.map((account, index) => (
-              <AccountCard
-                key={account.id}
-                id={account.id}
-                name={account.name}
-                number={account.number}
-                balance={account.balance}
-                type={account.type}
-                isExpanded={expandedAccount === account.id}
-                onToggle={() => setExpandedAccount(
-                  expandedAccount === account.id ? null : account.id
-                )}
-              />
-            ))}
-            
-            <button className="w-full bg-white rounded-2xl p-4 shadow-lg border border-gray-100 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 font-medium">Все мои продукты</span>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+          {/* Total Balance */}
+          <div className="bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm">Общий баланс</p>
+                <p className="text-3xl font-bold">{totalBalance.toLocaleString('ru-RU')} ₽</p>
               </div>
-            </button>
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <Wallet className="w-8 h-8" />
+              </div>
+            </div>
           </div>
-
-          {/* Customize Screen */}
-          <CustomizeScreen />
-
-          {/* Quick Transfers */}
-          <QuickTransfer
-            contacts={contacts}
-            onContactClick={(contact) => {
-              console.log('Transfer to:', contact);
-              setShowTransferModal(true);
-            }}
-            onAddNew={() => {
-              console.log('Add new contact');
-            }}
-          />
 
           {/* Tab Content */}
           {activeTab === 'cards' && (
             <div className="space-y-6">
               {/* Cards Section */}
               <div className="bg-white rounded-2xl p-4 shadow-lg">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Мои карты</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Мои карты</h3>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Создать карту</span>
+                  </button>
+                </div>
+                
                 {cards.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -298,17 +374,103 @@ export default function Home() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {cards.map((card, index) => (
-                      <VirtualCard
+                      <motion.div
                         key={card.id}
-                        card={card}
-                        onCopy={(text) => {
-                          navigator.clipboard.writeText(text);
-                          showNotification('Скопировано в буфер обмена');
-                        }}
-                        onToggleVisibility={() => hapticFeedback('light')}
-                      />
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 text-white relative overflow-hidden cursor-pointer"
+                        onClick={() => setExpandedCard(expandedCard === card.id ? null : card.id)}
+                      >
+                        {/* Card Design */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                              <CreditCard className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-300">Stellex Card</p>
+                              <p className="font-semibold">{card.holder_name}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold">{card.balance.toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-sm text-gray-300">
+                              {card.status === 'active' ? 'Активна' : 'Ожидает активации'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Card Number */}
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-300 mb-1">Номер карты</p>
+                          <p className="text-lg font-mono tracking-wider">
+                            {card.card_number.replace(/(.{4})/g, '$1 ').trim()}
+                          </p>
+                        </div>
+
+                        {/* Card Details */}
+                        <div className="flex items-center justify-between text-sm">
+                          <div>
+                            <p className="text-gray-300">Срок действия</p>
+                            <p className="font-mono">{card.expiry_date}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-300">CVV</p>
+                            <p className="font-mono">{card.cvv}</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCard(card);
+                                setShowTopUpModal(true);
+                              }}
+                              className="bg-white/20 px-3 py-1 rounded-lg text-xs"
+                            >
+                              Пополнить
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCard(card);
+                                setShowTransferModal(true);
+                              }}
+                              className="bg-white/20 px-3 py-1 rounded-lg text-xs"
+                            >
+                              Перевести
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Expanded Details */}
+                        <AnimatePresence>
+                          {expandedCard === card.id && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="mt-4 pt-4 border-t border-white/20"
+                            >
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-300">Тип карты</p>
+                                  <p className="font-semibold">Stellex Virtual</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-300">Создана</p>
+                                  <p className="font-semibold">
+                                    {new Date(card.created_at).toLocaleDateString('ru-RU')}
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
                     ))}
                   </div>
                 )}

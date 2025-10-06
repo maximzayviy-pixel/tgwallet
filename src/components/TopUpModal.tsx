@@ -88,7 +88,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({
             <CreditCard className="w-6 h-6 text-blue-400" />
             <div className="flex-1">
               <div className="text-white font-medium">
-                {card.type.toUpperCase()} •••• {card.number.slice(-4)}
+                STELLEX •••• {card.card_number.slice(-4)}
               </div>
               <div className="text-gray-400 text-sm">
                 Текущий баланс: {card.balance.toLocaleString('ru-RU')} ₽

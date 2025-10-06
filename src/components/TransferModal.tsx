@@ -2,13 +2,10 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, CreditCard, ArrowRight, AlertCircle } from 'lucide-react'
 
+import { Card } from '@/types'
+
 interface TransferModalProps {
-  cards: Array<{
-    id: string
-    number: string
-    balance: number
-    status: string
-  }>
+  cards: Card[]
   onTransfer: (data: {
     fromCardId: string
     toCardNumber: string
@@ -142,7 +139,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
               <option value="">Выберите карту</option>
               {activeCards.map((card) => (
                 <option key={card.id} value={card.id}>
-                  {card.number.slice(-4)} - {card.balance.toLocaleString('ru-RU')} ₽
+                  {card.card_number.slice(-4)} - {card.balance.toLocaleString('ru-RU')} ₽
                 </option>
               ))}
             </select>
