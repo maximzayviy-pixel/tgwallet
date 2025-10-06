@@ -18,8 +18,13 @@ import { createCard, generateId } from '@/lib/cardUtils';
 import { 
   initTelegramWebApp, 
   setupTelegramTheme, 
+  expandTelegramWebApp,
   showNotification,
   hapticFeedback,
+  showMainButton,
+  hideMainButton,
+  onMainButtonClick,
+  offMainButtonClick,
   getTelegramUser
 } from '@/lib/telegramUtils';
 
@@ -97,8 +102,8 @@ export default function Home() {
       // Симуляция создания карты
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const newCard = createCard('stellex', user?.id || '1');
-      setCards(prev => [...prev, newCard as Card]);
+      const newCard = createCard(data);
+      setCards(prev => [...prev, newCard]);
       setShowCreateForm(false);
       showNotification('Карта успешно создана!', 'success');
     } catch {

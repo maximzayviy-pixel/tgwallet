@@ -157,20 +157,44 @@ const VirtualCard: React.FC<VirtualCardProps> = ({
         {/* Card Actions */}
         {showDetails && (
           <div className="mt-8 relative z-10">
-            {card.status === 'awaiting_activation' ? (
-              <div className="text-center">
-                <div className="text-white/70 text-sm mb-4">
-                  Карта создана! Проверьте Telegram для активации
-                </div>
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold"
-                >
-                  Активировать карту
-                </motion.button>
-              </div>
-            ) : (
+                    {card.status === 'awaiting_activation' ? (
+                      <div className="text-center">
+                        <div className="text-white/70 text-sm mb-4">
+                          Карта создана! Нажмите для активации
+                        </div>
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/cards/activate', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  card_id: card.id,
+                                  telegram_user_id: 123456789, // В реальном приложении получать из Telegram
+                                  api_key: process.env.NEXT_PUBLIC_API_KEY
+                                })
+                              });
+
+                              if (response.ok) {
+                                // Обновляем статус карты локально
+                                const updatedCard = { ...card, status: 'active' as const };
+                                // Здесь нужно обновить состояние в родительском компоненте
+                                window.location.reload(); // Временное решение
+                              }
+                            } catch (error) {
+                              console.error('Error activating card:', error);
+                            }
+                          }}
+                          className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-4 rounded-2xl transition-all duration-300 text-sm font-semibold"
+                        >
+                          Активировать карту
+                        </motion.button>
+                      </div>
+                    ) : (
               <div className="flex space-x-3">
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
