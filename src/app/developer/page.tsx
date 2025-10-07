@@ -9,7 +9,7 @@ import DeveloperNavigation from '@/components/DeveloperNavigation'
 
 export default function DeveloperPage() {
   const { user } = useAuth()
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string; first_name: string; last_name?: string; username?: string } | null>(null)
   const [stats, setStats] = useState({
     totalPayments: 0,
     totalAmount: 0,
