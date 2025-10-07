@@ -22,10 +22,6 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  useEffect(() => {
-    loadPaymentData()
-  }, [loadPaymentData])
-
   const loadPaymentData = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -44,6 +40,10 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
       setIsLoading(false)
     }
   }, [params])
+
+  useEffect(() => {
+    loadPaymentData()
+  }, [loadPaymentData])
 
   const handlePayment = async () => {
     if (!user) {
