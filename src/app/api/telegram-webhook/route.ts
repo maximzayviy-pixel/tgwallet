@@ -235,10 +235,19 @@ export async function POST(request: NextRequest) {
       const total = Number(sp.total_amount || 0)
       
       if (fromId && currency === 'XTR' && total > 0) {
-        console.log('Successful payment received:', { fromId, stars: total })
+        console.log('Successful payment received:', { fromId, stars: total, payload: sp.invoice_payload })
         
         const stars = total
         const amountRub = stars / 2  // курс 2⭐ = 1₽
+
+        // Парсим payload для получения payment_request_id
+        let paymentRequestId = null
+        try {
+          const payload = JSON.parse(sp.invoice_payload || '{}')
+          paymentRequestId = payload.payment_request_id
+        } catch (e) {
+          console.error('Error parsing invoice payload:', e)
+        }
 
         // Получаем user_id
         const { data: userData, error: userError } = await supabase
@@ -253,6 +262,23 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = userData!.id
+
+        // Обновляем статус payment_request если есть ID
+        if (paymentRequestId) {
+          try {
+            await supabase
+              .from('payment_requests')
+              .update({
+                status: 'paid',
+                paid_amount_rub: amountRub,
+                paid_at: new Date().toISOString()
+              })
+              .eq('id', paymentRequestId)
+            console.log('Payment request updated:', paymentRequestId)
+          } catch (e) {
+            console.error('Error updating payment request:', e)
+          }
+        }
 
         // Создаем транзакцию
         const { error: transactionError } = await supabase
@@ -286,7 +312,7 @@ export async function POST(request: NextRequest) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: fromId,
-                text: `⭐ Оплата получена: +${stars}⭐ (${amountRub} ₽). Баланс обновится в приложении.`,
+                text: `✅ Оплата получена!\n💰 Сумма: ${amountRub} ₽ (${stars} ⭐)\n💳 Баланс обновится в приложении`,
               }),
             })
           )
