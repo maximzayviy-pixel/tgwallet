@@ -13,6 +13,7 @@ interface PaymentData {
   status: string
   expires_at: string
   created_at: string
+  return_url?: string
 }
 
 export default function PaymentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -64,7 +65,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
       // Перенаправляем на return_url если есть
       if (payment?.return_url) {
         setTimeout(() => {
-          window.location.href = payment.return_url
+          window.location.href = payment.return_url!
         }, 2000)
       }
     } catch (error) {
