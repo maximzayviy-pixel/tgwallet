@@ -57,95 +57,68 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
 
     try {
       const starsAmount = parseInt(formData.starsAmount)
-      const rubAmount = starsAmount * 1 // 1 звезда = 1 рубль
+      const rubAmount = starsAmount / 2 // 2 звезды = 1 рубль (как в вашем коде)
 
-      // Получаем API ключ с сервера
-      const configResponse = await fetch('/api/config')
-      const config = await configResponse.json()
-      
-      if (!config.supabaseAnonKey) {
-        throw new Error('API ключ не настроен на сервере')
+      const tg = window.Telegram?.WebApp
+      const tgId = tg?.initDataUnsafe?.user?.id
+      const bcId = (tg?.initDataUnsafe as any)?.business_connection_id || (tg?.initDataUnsafe as any)?.business?.id
+
+      if (!tgId) {
+        showNotification('Telegram ID не найден')
+        return
       }
 
-      // Создаем инвойс через API
-      const response = await fetch('/api/telegram-stars/topup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          card_id: formData.cardId,
-          stars_amount: starsAmount,
-          api_key: config.supabaseAnonKey, // Реальный API ключ с сервера
-          telegram_user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id
-        }),
-      })
+      // Показываем индикатор загрузки
+      const overlay = document.createElement("div")
+      overlay.className = "fixed inset-0 z-50 bg-black/40 flex items-center justify-center"
+      overlay.innerHTML = '<div class="bg-white rounded-2xl px-6 py-4 text-center shadow animate-pulse">Готовим оплату…</div>'
+      document.body.appendChild(overlay)
 
-      if (!response.ok) {
-        throw new Error('Failed to create invoice')
-      }
+      try {
+        // Создаем инвойс через правильный API
+        const response = await fetch('/api/stars-invoice-bot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-telegram-init-data': tg?.initData || '',
+          },
+          body: JSON.stringify({
+            amount_stars: starsAmount,
+            tg_id: tgId,
+            business_connection_id: bcId,
+          }),
+        })
 
-      const data = await response.json()
-      
-      if (data.success && data.invoice_data) {
-        // Используем Telegram WebApp API для создания инвойса
-        console.log('Telegram WebApp check:', {
-          windowTelegram: !!window.Telegram,
-          webApp: !!window.Telegram?.WebApp,
-          sendInvoice: !!window.Telegram?.WebApp?.sendInvoice,
-          alternativeWebApp: !!(window as any).TelegramWebApp,
-          alternativeSendInvoice: !!(window as any).TelegramWebApp?.sendInvoice
-        });
+        const data = await response.json()
         
-        // Проверяем разные способы доступа к Telegram WebApp
-        let webApp = window.Telegram?.WebApp;
-        if (!webApp) {
-          webApp = (window as any).TelegramWebApp;
+        if (!response.ok || !data?.ok || !data?.link) {
+          throw new Error(data?.error || 'INVOICE_FAILED')
         }
-        
-        // Дополнительная проверка - возможно API еще загружается
-        if (!webApp) {
-          // Ждем немного и пробуем снова
-          setTimeout(() => {
-            webApp = window.Telegram?.WebApp || (window as any).TelegramWebApp;
-            if (webApp && webApp.sendInvoice) {
-              webApp.sendInvoice(data.invoice_data, (status) => {
-                if (status === 'paid') {
-                  handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
-                } else if (status === 'cancelled') {
-                  showNotification('Оплата отменена')
-                } else if (status === 'failed') {
-                  showNotification('Ошибка оплаты')
-                }
-              })
-            } else {
-              console.log('Telegram WebApp still not available after timeout')
-              showNotification('Telegram WebApp не найден. Проверьте консоль для отладки.')
-            }
-          }, 1000)
-          return
-        }
-        
-        if (webApp && webApp.sendInvoice) {
-          webApp.sendInvoice(data.invoice_data, (status) => {
-            if (status === 'paid') {
-              // Обрабатываем успешную оплату
-              handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
-            } else if (status === 'cancelled') {
-              showNotification('Оплата отменена')
-            } else if (status === 'failed') {
-              showNotification('Ошибка оплаты')
-            }
-          })
+
+        // Открываем ссылку на бота
+        if (tg?.openTelegramLink) {
+          tg.openTelegramLink(data.link)
         } else {
-          // Fallback для браузера - показываем данные инвойса
-          console.log('Invoice data:', data.invoice_data)
-          console.log('Available window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('telegram')))
-          showNotification('Telegram WebApp не найден. Проверьте консоль для отладки.')
+          window.open(data.link, '_blank')
         }
-      } else {
-        throw new Error(data.error || 'Failed to create invoice')
+
+        // Показываем уведомление
+        const toast = document.createElement("div")
+        toast.className = "fixed left-1/2 -translate-x-1/2 bottom-6 z-50 bg-slate-900 text-white px-4 py-2 rounded-xl"
+        toast.textContent = "Открой чат с ботом для оплаты"
+        document.body.appendChild(toast)
+        setTimeout(() => toast.remove(), 2000)
+
+        // Закрываем модальное окно
+        onClose()
+
+      } catch (error) {
+        console.error('Invoice creation error:', error)
+        showNotification(error instanceof Error ? error.message : 'Ошибка формирования инвойса')
+      } finally {
+        overlay.remove()
       }
+
     } catch (error) {
       console.error('Top-up error:', error)
       showNotification('Ошибка при создании инвойса')
@@ -190,7 +163,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
   }
 
   const activeCards = cards.filter(card => card.status === 'active')
-  const rubAmount = formData.starsAmount ? parseInt(formData.starsAmount) * 1 : 0
+  const rubAmount = formData.starsAmount ? parseInt(formData.starsAmount) / 2 : 0
 
   return (
     <motion.div
@@ -287,7 +260,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           {/* Информация о курсе */}
           <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30">
             <div className="text-white/80 text-sm text-center">
-              Курс: 1 ⭐ = 1 ₽
+              Курс: 2 ⭐ = 1 ₽
             </div>
           </div>
 
