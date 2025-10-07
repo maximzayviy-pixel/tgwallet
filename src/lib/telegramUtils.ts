@@ -167,7 +167,18 @@ export const isTelegramWebApp = (): boolean => {
 // Получение экземпляра Telegram WebApp
 export const getTelegramWebApp = (): TelegramWebApp | null => {
   if (typeof window === 'undefined') return null;
-  return window.Telegram?.WebApp || null;
+  
+  // Проверяем несколько способов доступа к Telegram WebApp
+  if (window.Telegram?.WebApp) {
+    return window.Telegram.WebApp;
+  }
+  
+  // Альтернативные способы доступа
+  if ((window as any).TelegramWebApp) {
+    return (window as any).TelegramWebApp;
+  }
+  
+  return null;
 };
 
 // Получение данных пользователя из Telegram
@@ -176,9 +187,43 @@ export const getTelegramUser = (): TelegramUser | null => {
   return webApp?.initDataUnsafe?.user || null;
 };
 
+// Ожидание загрузки Telegram WebApp
+export const waitForTelegramWebApp = (): Promise<TelegramWebApp | null> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve(null);
+      return;
+    }
+
+    // Если уже загружен
+    const webApp = getTelegramWebApp();
+    if (webApp) {
+      resolve(webApp);
+      return;
+    }
+
+    // Ждем загрузки
+    let attempts = 0;
+    const maxAttempts = 50; // 5 секунд максимум
+    
+    const checkInterval = setInterval(() => {
+      attempts++;
+      const webApp = getTelegramWebApp();
+      
+      if (webApp) {
+        clearInterval(checkInterval);
+        resolve(webApp);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        resolve(null);
+      }
+    }, 100);
+  });
+};
+
 // Инициализация Telegram WebApp
-export const initTelegramWebApp = (): void => {
-  const webApp = getTelegramWebApp();
+export const initTelegramWebApp = async (): Promise<void> => {
+  const webApp = await waitForTelegramWebApp();
   if (webApp) {
     webApp.ready();
     webApp.expand();

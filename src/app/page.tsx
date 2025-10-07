@@ -45,9 +45,22 @@ export default function Home() {
 
   // Инициализация при загрузке
   useEffect(() => {
-    initTelegramWebApp();
-    setupTelegramTheme();
-    loadUserData();
+    const initializeApp = async () => {
+      try {
+        // Инициализируем Telegram WebApp с ожиданием
+        await initTelegramWebApp();
+        setupTelegramTheme();
+        
+        // Загружаем данные пользователя
+        await loadUserData();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      } finally {
+        setIsAppLoading(false);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   const loadUserData = async () => {

@@ -81,8 +81,17 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
       
       if (data.success && data.invoice_data) {
         // Используем Telegram WebApp API для создания инвойса
-        if (window.Telegram?.WebApp?.sendInvoice) {
-          window.Telegram.WebApp.sendInvoice(data.invoice_data, (status) => {
+        console.log('Telegram WebApp check:', {
+          windowTelegram: !!window.Telegram,
+          webApp: !!window.Telegram?.WebApp,
+          sendInvoice: !!window.Telegram?.WebApp?.sendInvoice,
+          alternativeWebApp: !!(window as any).TelegramWebApp,
+          alternativeSendInvoice: !!(window as any).TelegramWebApp?.sendInvoice
+        });
+        
+        const webApp = window.Telegram?.WebApp;
+        if (webApp && webApp.sendInvoice) {
+          webApp.sendInvoice(data.invoice_data, (status) => {
             if (status === 'paid') {
               // Обрабатываем успешную оплату
               handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
@@ -93,8 +102,22 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
             }
           })
         } else {
-          // Fallback для браузера
-          showNotification('Функция доступна только в Telegram')
+          // Пробуем альтернативный способ
+          if ((window as any).TelegramWebApp?.sendInvoice) {
+            (window as any).TelegramWebApp.sendInvoice(data.invoice_data, (status: string) => {
+              if (status === 'paid') {
+                handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
+              } else if (status === 'cancelled') {
+                showNotification('Оплата отменена')
+              } else if (status === 'failed') {
+                showNotification('Ошибка оплаты')
+              }
+            })
+          } else {
+            // Fallback для браузера - показываем данные инвойса
+            console.log('Invoice data:', data.invoice_data)
+            showNotification('Telegram WebApp не найден. Данные инвойса в консоли.')
+          }
         }
       } else {
         throw new Error(data.error || 'Failed to create invoice')
