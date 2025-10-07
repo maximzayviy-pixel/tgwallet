@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, Plus, Wallet, History, Settings, Star, Shield, Zap, Eye, EyeOff, Code } from 'lucide-react';
 import VirtualCard from '@/components/VirtualCard';
 import TopUpModal from '@/components/TopUpModal';
 import TransferModal from '@/components/TransferModal';
@@ -673,6 +673,19 @@ function TelegramBankApp() {
             />
           )}
         </AnimatePresence>
+
+        {/* Developer Access */}
+        <div className="px-4 pb-4">
+          <motion.a
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            href="/developer/login"
+            className="block w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 text-center"
+          >
+            <Code className="w-5 h-5 inline mr-2" />
+            Панель разработчика Stellex Pay
+          </motion.a>
+        </div>
 
         {/* Bottom Navigation */}
         <BottomNavigation 

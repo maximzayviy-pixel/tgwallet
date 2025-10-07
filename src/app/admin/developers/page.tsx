@@ -109,24 +109,56 @@ export default function DevelopersManagement() {
     return 'dev_pass_' + Math.random().toString(36).substring(2, 8);
   };
 
-  const handleAddDeveloper = () => {
+  const handleAddDeveloper = async () => {
     if (!newDeveloper.name || !newDeveloper.email) return;
 
-    const developer: Developer = {
-      id: Date.now().toString(),
-      name: newDeveloper.name,
-      email: newDeveloper.email,
-      login: generateLogin(newDeveloper.name),
-      password: generatePassword(),
-      permissions: newDeveloper.permissions,
-      isActive: true,
-      createdAt: new Date().toISOString().split('T')[0],
-      apiKeysCount: 0
-    };
+    try {
+      // Создаем пароль
+      const password = generatePassword();
+      
+      // Отправляем запрос на создание разработчика
+      const response = await fetch('/api/admin/create-developer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token') || 'la0fEUlxBU80DFMzlZZc'}`
+        },
+        body: JSON.stringify({
+          email: newDeveloper.email,
+          password: password,
+          first_name: newDeveloper.name.split(' ')[0],
+          last_name: newDeveloper.name.split(' ').slice(1).join(' '),
+          username: generateLogin(newDeveloper.name)
+        })
+      });
 
-    setDevelopers(prev => [...prev, developer]);
-    setNewDeveloper({ name: '', email: '', permissions: [] });
-    setShowAddForm(false);
+      const data = await response.json();
+
+      if (data.success) {
+        const developer: Developer = {
+          id: data.developer.id,
+          name: `${data.developer.first_name} ${data.developer.last_name}`,
+          email: data.developer.email,
+          login: data.developer.username,
+          password: password,
+          permissions: newDeveloper.permissions,
+          isActive: true,
+          createdAt: new Date().toISOString().split('T')[0],
+          apiKeysCount: 0
+        };
+
+        setDevelopers(prev => [...prev, developer]);
+        setNewDeveloper({ name: '', email: '', permissions: [] });
+        setShowAddForm(false);
+        
+        alert('Разработчик успешно создан!');
+      } else {
+        alert(data.error || 'Ошибка создания разработчика');
+      }
+    } catch (error) {
+      console.error('Error creating developer:', error);
+      alert('Ошибка создания разработчика');
+    }
   };
 
   const handleDeleteDeveloper = (id: string) => {
