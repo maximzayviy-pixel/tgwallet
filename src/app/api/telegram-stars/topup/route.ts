@@ -7,23 +7,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { card_id, stars_amount, api_key, telegram_user_id } = body
 
-    // Проверяем API ключ - принимаем как test_key, так и Supabase ключ
-    const expectedApiKey = process.env.API_KEY || 'test_key'
+    // Проверяем API ключ - только реальные ключи
+    const expectedApiKey = process.env.API_KEY
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
     console.log('API Key check:', { 
-      provided: api_key, 
-      expected: expectedApiKey,
+      provided: api_key ? `${api_key.substring(0, 20)}...` : 'not provided',
+      expected: expectedApiKey ? `${expectedApiKey.substring(0, 20)}...` : 'not set',
       supabaseKey: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'not set'
     })
     
-    // Принимаем test_key, Supabase ключ или пропускаем если не передан
-    if (api_key && api_key !== expectedApiKey && api_key !== supabaseAnonKey) {
-      console.log('Invalid API key provided, but continuing with request')
-      // Не блокируем запрос, если ключ неверный - продолжаем выполнение
-    } else {
-      console.log('API key accepted:', api_key ? 'provided' : 'not provided')
+    // Принимаем только реальные API ключи
+    const isValidKey = api_key && (api_key === expectedApiKey || api_key === supabaseAnonKey)
+    
+    if (!isValidKey) {
+      console.log('Invalid or missing API key')
+      return NextResponse.json({ error: 'Valid API key required' }, { status: 401 })
     }
+    
+    console.log('API key accepted')
 
     if (!card_id || !stars_amount || stars_amount <= 0) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })

@@ -59,6 +59,14 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
       const starsAmount = parseInt(formData.starsAmount)
       const rubAmount = starsAmount * 1 // 1 звезда = 1 рубль
 
+      // Получаем API ключ с сервера
+      const configResponse = await fetch('/api/config')
+      const config = await configResponse.json()
+      
+      if (!config.supabaseAnonKey) {
+        throw new Error('API ключ не настроен на сервере')
+      }
+
       // Создаем инвойс через API
       const response = await fetch('/api/telegram-stars/topup', {
         method: 'POST',
@@ -68,7 +76,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
         body: JSON.stringify({
           card_id: formData.cardId,
           stars_amount: starsAmount,
-          api_key: 'test_key', // API ключ для Telegram Stars
+          api_key: config.supabaseAnonKey, // Реальный API ключ с сервера
           telegram_user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id
         }),
       })
@@ -93,6 +101,29 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
         let webApp = window.Telegram?.WebApp;
         if (!webApp) {
           webApp = (window as any).TelegramWebApp;
+        }
+        
+        // Дополнительная проверка - возможно API еще загружается
+        if (!webApp) {
+          // Ждем немного и пробуем снова
+          setTimeout(() => {
+            webApp = window.Telegram?.WebApp || (window as any).TelegramWebApp;
+            if (webApp && webApp.sendInvoice) {
+              webApp.sendInvoice(data.invoice_data, (status) => {
+                if (status === 'paid') {
+                  handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
+                } else if (status === 'cancelled') {
+                  showNotification('Оплата отменена')
+                } else if (status === 'failed') {
+                  showNotification('Ошибка оплаты')
+                }
+              })
+            } else {
+              console.log('Telegram WebApp still not available after timeout')
+              showNotification('Telegram WebApp не найден. Проверьте консоль для отладки.')
+            }
+          }, 1000)
+          return
         }
         
         if (webApp && webApp.sendInvoice) {

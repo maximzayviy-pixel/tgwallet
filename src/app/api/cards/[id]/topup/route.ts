@@ -11,12 +11,18 @@ export async function POST(
     const { amount, api_key, external_id } = body
     const { id: cardId } = await params
 
-    // Проверяем API ключ - принимаем test_key или пропускаем
-    const expectedApiKey = process.env.API_KEY || 'test_key'
-    if (api_key && api_key !== expectedApiKey) {
-      console.log('Invalid API key provided, but continuing with request')
-      // Не блокируем запрос, если ключ неверный
+    // Проверяем API ключ - только реальные ключи
+    const expectedApiKey = process.env.API_KEY
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    const isValidKey = api_key && (api_key === expectedApiKey || api_key === supabaseAnonKey)
+    
+    if (!isValidKey) {
+      console.log('Invalid or missing API key')
+      return NextResponse.json({ error: 'Valid API key required' }, { status: 401 })
     }
+    
+    console.log('API key accepted')
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Valid amount required' }, { status: 400 })
