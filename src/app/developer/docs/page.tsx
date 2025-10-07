@@ -170,7 +170,7 @@ function MyComponent() {
                 <div className="bg-white/5 p-6 rounded-xl">
                   <h3 className="text-xl font-bold text-white mb-3">🛠️ Гибкость</h3>
                   <p className="text-white/70">
-                    Настраиваемые кнопки, webhook'и и интеграции с любыми платформами
+                    Настраиваемые кнопки, webhook&apos;и и интеграции с любыми платформами
                   </p>
                 </div>
               </div>

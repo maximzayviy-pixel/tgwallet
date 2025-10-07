@@ -10,14 +10,13 @@ interface Template {
   name: string
   description: string
   category: string
-  config: any
+  config: Record<string, unknown>
   preview: string
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
 }
 
 export default function TemplatesPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
 
   const templates: Template[] = [
     {

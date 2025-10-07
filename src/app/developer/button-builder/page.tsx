@@ -3,15 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { 
-  Palette, 
   Copy, 
   Download, 
   Eye, 
   Code, 
   Settings, 
-  Zap,
-  ChevronLeft,
-  ChevronRight
+  Zap
 } from 'lucide-react'
 import DeveloperNavigation from '@/components/DeveloperNavigation'
 
@@ -232,7 +229,7 @@ export default function ButtonBuilderPage() {
                       ].map((style) => (
                         <button
                           key={style.value}
-                          onClick={() => setConfig(prev => ({ ...prev, style: style.value as any }))}
+                          onClick={() => setConfig(prev => ({ ...prev, style: style.value as 'primary' | 'secondary' | 'minimal' | 'gradient' }))}
                           className={`p-3 rounded-xl border-2 transition-all ${
                             config.style === style.value
                               ? 'border-purple-400 bg-purple-500/20'
@@ -256,7 +253,7 @@ export default function ButtonBuilderPage() {
                       {['sm', 'md', 'lg', 'xl'].map((size) => (
                         <button
                           key={size}
-                          onClick={() => setConfig(prev => ({ ...prev, size: size as any }))}
+                          onClick={() => setConfig(prev => ({ ...prev, size: size as 'sm' | 'md' | 'lg' | 'xl' }))}
                           className={`p-3 rounded-xl border-2 transition-all ${
                             config.size === size
                               ? 'border-purple-400 bg-purple-500/20'
@@ -370,7 +367,7 @@ export default function ButtonBuilderPage() {
                       {['auto', 'full'].map((width) => (
                         <button
                           key={width}
-                          onClick={() => setConfig(prev => ({ ...prev, width: width as any }))}
+                          onClick={() => setConfig(prev => ({ ...prev, width: width as 'auto' | 'full' }))}
                           className={`p-3 rounded-xl border-2 transition-all ${
                             config.width === width
                               ? 'border-purple-400 bg-purple-500/20'
@@ -392,7 +389,7 @@ export default function ButtonBuilderPage() {
                       {['left', 'center', 'right'].map((alignment) => (
                         <button
                           key={alignment}
-                          onClick={() => setConfig(prev => ({ ...prev, alignment: alignment as any }))}
+                          onClick={() => setConfig(prev => ({ ...prev, alignment: alignment as 'left' | 'center' | 'right' }))}
                           className={`p-3 rounded-xl border-2 transition-all ${
                             config.alignment === alignment
                               ? 'border-purple-400 bg-purple-500/20'

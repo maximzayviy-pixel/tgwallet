@@ -174,8 +174,8 @@ export const getTelegramWebApp = (): TelegramWebApp | null => {
   }
   
   // Альтернативные способы доступа
-  if ((window as any).TelegramWebApp) {
-    return (window as any).TelegramWebApp;
+  if ((window as { TelegramWebApp?: TelegramWebApp }).TelegramWebApp) {
+    return (window as { TelegramWebApp: TelegramWebApp }).TelegramWebApp;
   }
   
   return null;
