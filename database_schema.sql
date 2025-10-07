@@ -81,13 +81,54 @@ CREATE POLICY "Users can view own payment requests" ON payment_requests
   FOR SELECT USING (tg_id = (current_setting('request.jwt.claims', true)::json->>'tg_id')::bigint);
 
 -- Политика для transactions - пользователи могут видеть только свои транзакции
+DROP POLICY IF EXISTS "Users can view own transactions" ON transactions;
 CREATE POLICY "Users can view own transactions" ON transactions
   FOR SELECT USING (user_id = (current_setting('request.jwt.claims', true)::json->>'user_id')::uuid);
 
 -- Политика для cards - пользователи могут видеть только свои карты
+DROP POLICY IF EXISTS "Users can view own cards" ON cards;
 CREATE POLICY "Users can view own cards" ON cards
   FOR SELECT USING (user_id = (current_setting('request.jwt.claims', true)::json->>'user_id')::uuid);
 
 -- Политика для users - пользователи могут видеть только свои данные
+DROP POLICY IF EXISTS "Users can view own data" ON users;
 CREATE POLICY "Users can view own data" ON users
   FOR SELECT USING (telegram_id = (current_setting('request.jwt.claims', true)::json->>'tg_id')::bigint);
+
+-- Создаем таблицу для платежных ссылок разработчиков
+CREATE TABLE IF NOT EXISTS payment_links (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'RUB',
+    description TEXT NOT NULL,
+    return_url TEXT,
+    webhook_url TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Индексы для payment_links
+CREATE INDEX IF NOT EXISTS idx_payment_links_user_id ON payment_links(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_links_status ON payment_links(status);
+CREATE INDEX IF NOT EXISTS idx_payment_links_created_at ON payment_links(created_at);
+
+-- RLS для payment_links
+ALTER TABLE payment_links ENABLE ROW LEVEL SECURITY;
+
+-- Политика для payment_links - пользователи могут видеть только свои ссылки
+DROP POLICY IF EXISTS "Users can view own payment links" ON payment_links;
+CREATE POLICY "Users can view own payment links" ON payment_links
+  FOR SELECT USING (user_id = (current_setting('request.jwt.claims', true)::json->>'id')::uuid);
+
+-- Политика для создания payment_links
+DROP POLICY IF EXISTS "Users can create payment links" ON payment_links;
+CREATE POLICY "Users can create payment links" ON payment_links
+  FOR INSERT WITH CHECK (user_id = (current_setting('request.jwt.claims', true)::json->>'id')::uuid);
+
+-- Политика для обновления payment_links
+DROP POLICY IF EXISTS "Users can update own payment links" ON payment_links;
+CREATE POLICY "Users can update own payment links" ON payment_links
+  FOR UPDATE USING (user_id = (current_setting('request.jwt.claims', true)::json->>'id')::uuid);

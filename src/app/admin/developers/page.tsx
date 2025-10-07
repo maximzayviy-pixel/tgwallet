@@ -117,7 +117,7 @@ export default function DevelopersManagement() {
       const password = generatePassword();
       
       // Отправляем запрос на создание разработчика
-      const response = await fetch('/api/admin/create-developer', {
+      const response = await fetch('/api/admin/create-developer-edge', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

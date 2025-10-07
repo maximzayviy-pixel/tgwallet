@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { verifySimpleToken } from '@/lib/auth-edge'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Проверяем токен
-    const user = verifyToken(token)
+    const user = verifySimpleToken(token)
     if (!user) {
       return NextResponse.redirect(new URL('/developer/login', request.url))
     }

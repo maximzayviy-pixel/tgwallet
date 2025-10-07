@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Code, BarChart3, Settings, Plus, ExternalLink, Zap, Shield, Star } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
-import { verifyToken } from '@/lib/auth'
+import { verifySimpleToken } from '@/lib/auth-edge'
 import DeveloperNavigation from '@/components/DeveloperNavigation'
 
 export default function DeveloperPage() {
@@ -25,7 +25,7 @@ export default function DeveloperPage() {
     }
 
     // Проверяем токен
-    const user = verifyToken(token)
+    const user = verifySimpleToken(token)
     if (!user) {
       localStorage.removeItem('auth_token')
       window.location.href = '/developer/login'
