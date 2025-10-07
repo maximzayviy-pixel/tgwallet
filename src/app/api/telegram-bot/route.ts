@@ -102,7 +102,7 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       prices: [
         {
           label: 'XTR', // Согласно документации - должно быть XTR
-          amount: paymentRequest.amount_stars * 100 // Telegram Stars в копейках
+          amount: paymentRequest.amount_stars // Telegram Stars - без умножения на 100
         }
       ],
       start_parameter: `pay_${paymentRequestId}`,
@@ -139,6 +139,8 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
     console.error('Payment request error:', error)
     await sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.')
   }
+  
+  return NextResponse.json({ ok: true })
 }
 
 // Отправка сообщения

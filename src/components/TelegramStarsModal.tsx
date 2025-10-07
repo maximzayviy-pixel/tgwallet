@@ -89,7 +89,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           prices: [
             {
               label: 'XTR',
-              amount: starsAmount * 100 // Telegram Stars в копейках
+              amount: starsAmount // Telegram Stars - без умножения на 100
             }
           ],
           start_parameter: `topup_${Date.now()}`,
@@ -105,6 +105,12 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
         console.log('Creating invoice with data:', invoiceData)
 
         // Используем Telegram WebApp API для создания инвойса
+        console.log('Telegram WebApp available:', {
+          tg: !!tg,
+          sendInvoice: !!tg?.sendInvoice,
+          openInvoice: !!tg?.openInvoice
+        })
+
         if (tg?.sendInvoice) {
           tg.sendInvoice({ invoice: invoiceData }, (status) => {
             console.log('Payment status:', status)
@@ -117,8 +123,56 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
               showNotification('Ошибка оплаты')
             }
           })
+        } else if (tg?.openInvoice) {
+          // Fallback на openInvoice если sendInvoice недоступен
+          tg.openInvoice(JSON.stringify(invoiceData), (status) => {
+            console.log('Payment status:', status)
+            if (status === 'paid') {
+              showNotification('✅ Оплата прошла успешно!')
+              onClose()
+            } else if (status === 'cancelled') {
+              showNotification('Оплата отменена')
+            } else if (status === 'failed') {
+              showNotification('Ошибка оплаты')
+            }
+          })
         } else {
-          throw new Error('Telegram WebApp API не доступен')
+          // Fallback - создаем инвойс через бота
+          console.log('Using bot fallback for invoice creation')
+          const response = await fetch('/api/stars-invoice-bot', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-telegram-init-data': tg?.initData || '',
+            },
+            body: JSON.stringify({
+              amount_stars: starsAmount,
+              tg_id: tgId,
+              business_connection_id: bcId,
+            }),
+          })
+
+          const data = await response.json()
+          
+          if (!response.ok || !data?.ok || !data?.link) {
+            throw new Error(data?.error || 'INVOICE_FAILED')
+          }
+
+          // Открываем ссылку на бота
+          if (tg?.openTelegramLink) {
+            tg.openTelegramLink(data.link)
+          } else {
+            window.open(data.link, '_blank')
+          }
+
+          // Показываем уведомление
+          const toast = document.createElement("div")
+          toast.className = "fixed left-1/2 -translate-x-1/2 bottom-6 z-50 bg-slate-900 text-white px-4 py-2 rounded-xl"
+          toast.textContent = "Открой чат с ботом для оплаты"
+          document.body.appendChild(toast)
+          setTimeout(() => toast.remove(), 2000)
+
+          onClose()
         }
 
       } catch (error) {
