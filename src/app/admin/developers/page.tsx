@@ -5,14 +5,10 @@ import { motion } from 'framer-motion';
 import { 
   Users, 
   Plus, 
-  Key, 
   Trash2, 
   Copy, 
   Eye, 
-  EyeOff,
-  Edit,
-  Save,
-  X
+  EyeOff
 } from 'lucide-react';
 import AdminNavigation from '@/components/AdminNavigation';
 import AuthGuard from '@/components/AuthGuard';
@@ -33,7 +29,6 @@ interface Developer {
 export default function DevelopersManagement() {
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [newDeveloper, setNewDeveloper] = useState({
     name: '',
     email: '',

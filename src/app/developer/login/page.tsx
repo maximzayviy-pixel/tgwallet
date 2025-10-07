@@ -39,9 +39,9 @@ export default function DeveloperLoginPage() {
       // Перенаправляем в панель разработчика
       router.push('/developer')
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      setError(err.message || 'Произошла ошибка')
+      setError(err instanceof Error ? err.message : 'Произошла ошибка')
     } finally {
       setIsLoading(false)
     }

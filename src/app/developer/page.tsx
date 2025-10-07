@@ -52,9 +52,9 @@ export default function DeveloperPage() {
         const links = data.payment_links
         setStats({
           totalPayments: links.length,
-          totalAmount: links.reduce((sum: number, link: any) => sum + link.amount, 0),
-          activeLinks: links.filter((link: any) => link.status === 'pending').length,
-          completedPayments: links.filter((link: any) => link.status === 'completed').length
+          totalAmount: links.reduce((sum: number, link: { amount: number }) => sum + link.amount, 0),
+          activeLinks: links.filter((link: { status: string }) => link.status === 'pending').length,
+          completedPayments: links.filter((link: { status: string }) => link.status === 'completed').length
         })
       }
     } catch (error) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Palette, 
@@ -53,12 +53,8 @@ export default function ButtonBuilderPage() {
   const [currency, setCurrency] = useState('RUB')
   const [generatedCode, setGeneratedCode] = useState('')
 
-  useEffect(() => {
-    generateCode()
-  }, [config, previewUrl, amount, currency])
-
-  const generateCode = () => {
-    const buttonStyles = {
+  const generateCode = useCallback(() => {
+    const buttonStyles: Record<string, Record<string, string>> = {
       primary: {
         background: config.backgroundColor,
         color: config.color,
@@ -82,7 +78,7 @@ export default function ButtonBuilderPage() {
       }
     }
 
-    const sizeStyles = {
+    const sizeStyles: Record<string, Record<string, string>> = {
       sm: { padding: '8px 16px', fontSize: '14px' },
       md: { padding: '12px 24px', fontSize: '16px' },
       lg: { padding: '16px 32px', fontSize: '18px' },
@@ -92,7 +88,7 @@ export default function ButtonBuilderPage() {
     const currentStyle = buttonStyles[config.style]
     const currentSize = sizeStyles[config.size]
 
-    const baseStyles = {
+    const baseStyles: Record<string, string> = {
       ...currentStyle,
       ...currentSize,
       borderRadius: `${config.borderRadius}px`,
@@ -109,7 +105,7 @@ export default function ButtonBuilderPage() {
       boxShadow: config.shadow ? '0 4px 15px rgba(139, 92, 246, 0.3)' : 'none'
     }
 
-    const hoverStyles = config.hover ? {
+    const hoverStyles: Record<string, string> = config.hover ? {
       transform: 'translateY(-2px)',
       boxShadow: config.shadow ? '0 6px 20px rgba(139, 92, 246, 0.4)' : '0 6px 20px rgba(0, 0, 0, 0.1)'
     } : {}
@@ -155,7 +151,11 @@ export default function ButtonBuilderPage() {
     `.trim()
 
     setGeneratedCode(htmlCode)
-  }
+  }, [config, previewUrl, amount, currency])
+
+  useEffect(() => {
+    generateCode()
+  }, [generateCode])
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedCode)

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 // Функция для прямого обновления баланса
-async function updateBalanceDirectly(supabase: any, userId: string, tgId: number) {
+async function updateBalanceDirectly(supabase: typeof import('@/lib/supabase').supabase, userId: string, tgId: number) {
   console.log('Updating balance directly for user:', { userId, tgId })
   
   try {
@@ -20,7 +20,7 @@ async function updateBalanceDirectly(supabase: any, userId: string, tgId: number
     
     let totalBalance = 0
     
-    transactionData?.forEach((record: any) => {
+    transactionData?.forEach((record: { type: string; amount: number | null }) => {
       if (record.type === 'telegram_stars_topup') {
         totalBalance += Number(record.amount || 0)
       } else if (record.type === 'transfer' || record.type === 'withdrawal') {
@@ -49,11 +49,11 @@ async function updateBalanceDirectly(supabase: any, userId: string, tgId: number
   }
 }
 
-const ok = (body: any = { ok: true }) =>
+const ok = (body: Record<string, unknown> = { ok: true }) =>
   NextResponse.json(body, { status: 200 })
 
 const runQuickly = <T,>(p: Promise<T>, ms = 800) =>
-  Promise.race([p, new Promise<T | undefined>(r => setTimeout(() => r(undefined as any), ms))])
+  Promise.race([p, new Promise<T | undefined>(r => setTimeout(() => r(undefined), ms))])
 
 export async function POST(request: NextRequest) {
   try {

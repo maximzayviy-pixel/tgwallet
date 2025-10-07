@@ -61,7 +61,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
 
       const tg = window.Telegram?.WebApp
       const tgId = tg?.initDataUnsafe?.user?.id
-      const bcId = (tg?.initDataUnsafe as any)?.business_connection_id || (tg?.initDataUnsafe as any)?.business?.id
+      const bcId = (tg?.initDataUnsafe as { business_connection_id?: string; business?: { id: string } })?.business_connection_id || (tg?.initDataUnsafe as { business_connection_id?: string; business?: { id: string } })?.business?.id
 
       if (!tgId) {
         showNotification('Telegram ID не найден')
