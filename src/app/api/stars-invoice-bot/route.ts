@@ -77,9 +77,7 @@ export async function POST(request: NextRequest) {
         tg_id: tg_id,
         amount_rub: amount_stars / 2, // 2 звезды = 1 рубль
         amount_stars: amount_stars,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        status: 'pending'
       })
       .select('id')
       .single()
