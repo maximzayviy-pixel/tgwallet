@@ -75,42 +75,51 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
       document.body.appendChild(overlay)
 
       try {
-        // Создаем инвойс через правильный API
-        const response = await fetch('/api/stars-invoice-bot', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-telegram-init-data': tg?.initData || '',
-          },
-          body: JSON.stringify({
+        // Создаем инвойс напрямую через Telegram WebApp API
+        const invoiceData = {
+          title: `Stellex: пополнение`,
+          description: `Пополнение баланса на ${starsAmount} ⭐`,
+          payload: JSON.stringify({
             amount_stars: starsAmount,
-            tg_id: tgId,
-            business_connection_id: bcId,
+            amount_rub: rubAmount,
+            user_id: tgId
           }),
-        })
-
-        const data = await response.json()
-        
-        if (!response.ok || !data?.ok || !data?.link) {
-          throw new Error(data?.error || 'INVOICE_FAILED')
+          provider_token: '', // Для Telegram Stars не нужен provider token
+          currency: 'XTR', // Telegram Stars currency
+          prices: [
+            {
+              label: 'XTR',
+              amount: starsAmount * 100 // Telegram Stars в копейках
+            }
+          ],
+          start_parameter: `topup_${Date.now()}`,
+          is_flexible: false,
+          need_name: false,
+          need_phone_number: false,
+          need_email: false,
+          need_shipping_address: false,
+          send_phone_number_to_provider: false,
+          send_email_to_provider: false
         }
 
-        // Открываем ссылку на бота
-        if (tg?.openTelegramLink) {
-          tg.openTelegramLink(data.link)
+        console.log('Creating invoice with data:', invoiceData)
+
+        // Используем Telegram WebApp API для создания инвойса
+        if (tg?.sendInvoice) {
+          tg.sendInvoice({ invoice: invoiceData }, (status) => {
+            console.log('Payment status:', status)
+            if (status === 'paid') {
+              showNotification('✅ Оплата прошла успешно!')
+              onClose()
+            } else if (status === 'cancelled') {
+              showNotification('Оплата отменена')
+            } else if (status === 'failed') {
+              showNotification('Ошибка оплаты')
+            }
+          })
         } else {
-          window.open(data.link, '_blank')
+          throw new Error('Telegram WebApp API не доступен')
         }
-
-        // Показываем уведомление
-        const toast = document.createElement("div")
-        toast.className = "fixed left-1/2 -translate-x-1/2 bottom-6 z-50 bg-slate-900 text-white px-4 py-2 rounded-xl"
-        toast.textContent = "Открой чат с ботом для оплаты"
-        document.body.appendChild(toast)
-        setTimeout(() => toast.remove(), 2000)
-
-        // Закрываем модальное окно
-        onClose()
 
       } catch (error) {
         console.error('Invoice creation error:', error)

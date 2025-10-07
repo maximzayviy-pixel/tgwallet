@@ -34,12 +34,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       .eq('id', paymentRequestId)
       .single()
 
+    console.log('Payment request query result:', { paymentRequest, error })
+
     if (error) {
       console.error('Error fetching payment request:', error)
-      return NextResponse.json({ error: 'Payment request not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Payment request not found', details: error.message }, { status: 404 })
     }
 
     if (!paymentRequest) {
+      console.log('Payment request not found in database')
       return NextResponse.json({ error: 'Payment request not found' }, { status: 404 })
     }
 

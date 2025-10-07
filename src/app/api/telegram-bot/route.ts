@@ -62,26 +62,35 @@ export async function POST(request: NextRequest) {
 // Обработка запроса на пополнение
 async function handlePaymentRequest(paymentRequestId: string, userId: number, chatId: number) {
   try {
+    console.log('Fetching payment request:', paymentRequestId)
+    
     // Получаем данные запроса из базы данных
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tgwallet-ei8z.vercel.app'
-    const { data: paymentRequest, error } = await fetch(`${appUrl}/api/payment-request/${paymentRequestId}`)
-      .then(res => res.json())
+    const response = await fetch(`${appUrl}/api/payment-request/${paymentRequestId}`)
+    const data = await response.json()
+    
+    console.log('Payment request response:', { status: response.status, data })
 
-    if (error || !paymentRequest) {
+    if (!response.ok || data.error) {
+      console.error('Payment request fetch failed:', data)
       await sendMessage(chatId, '❌ Запрос на пополнение не найден или истек.')
       return
     }
+
+    const paymentRequest = data
 
     if (paymentRequest.status !== 'pending') {
       await sendMessage(chatId, '❌ Этот запрос уже обработан.')
       return
     }
 
+    console.log('Creating invoice for payment request:', paymentRequest)
+
     // Создаем инвойс для оплаты звездами согласно документации
     const invoice = {
       chat_id: chatId,
-      title: `Пополнение карты Stellex`,
-      description: `Пополнение виртуальной карты на ${paymentRequest.amount_rub} ₽`,
+      title: `Stellex: пополнение`,
+      description: `Пополнение баланса на ${paymentRequest.amount_stars} ⭐`,
       payload: JSON.stringify({
         payment_request_id: paymentRequestId,
         user_id: userId,
@@ -109,7 +118,7 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
     console.log('Sending invoice:', invoice)
 
     // Отправляем инвойс
-    const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendInvoice`, {
+    const invoiceResponse = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendInvoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,10 +126,11 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       body: JSON.stringify(invoice)
     })
 
-    const result = await response.json()
+    const result = await invoiceResponse.json()
     
     if (result.ok) {
       console.log('Invoice sent successfully:', result.result.message_id)
+      console.log('Invoice link:', result.result.invoice_link)
     } else {
       console.error('Failed to send invoice:', result)
       await sendMessage(chatId, '❌ Ошибка создания инвойса. Попробуйте позже.')
