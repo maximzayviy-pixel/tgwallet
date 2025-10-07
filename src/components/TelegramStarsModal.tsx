@@ -111,8 +111,30 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           openInvoice: !!tg?.openInvoice
         })
 
-        if (tg?.sendInvoice) {
-          tg.sendInvoice({ invoice: invoiceData }, (status) => {
+        // Создаем инвойс через бота и получаем ссылку
+        const response = await fetch('/api/stars-invoice-bot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-telegram-init-data': tg?.initData || '',
+          },
+          body: JSON.stringify({
+            amount_stars: starsAmount,
+            tg_id: tgId,
+            business_connection_id: bcId,
+          }),
+        })
+
+        const data = await response.json()
+        
+        if (!response.ok || !data?.ok || !data?.link) {
+          throw new Error(data?.error || 'INVOICE_FAILED')
+        }
+
+        // Используем правильный метод для открытия инвойса
+        if (tg?.openInvoice) {
+          // Открываем инвойс по ссылке
+          tg.openInvoice(data.link, (status) => {
             console.log('Payment status:', status)
             if (status === 'paid') {
               showNotification('✅ Оплата прошла успешно!')
@@ -123,55 +145,15 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
               showNotification('Ошибка оплаты')
             }
           })
-        } else if (tg?.openInvoice) {
-          // Fallback на openInvoice если sendInvoice недоступен
-          tg.openInvoice(JSON.stringify(invoiceData), (status) => {
-            console.log('Payment status:', status)
-            if (status === 'paid') {
-              showNotification('✅ Оплата прошла успешно!')
-              onClose()
-            } else if (status === 'cancelled') {
-              showNotification('Оплата отменена')
-            } else if (status === 'failed') {
-              showNotification('Ошибка оплаты')
-            }
-          })
+        } else if (tg?.openTelegramLink) {
+          // Fallback - открываем ссылку на бота
+          tg.openTelegramLink(data.link)
+          showNotification('Откройте чат с ботом для оплаты')
+          onClose()
         } else {
-          // Fallback - создаем инвойс через бота
-          console.log('Using bot fallback for invoice creation')
-          const response = await fetch('/api/stars-invoice-bot', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-telegram-init-data': tg?.initData || '',
-            },
-            body: JSON.stringify({
-              amount_stars: starsAmount,
-              tg_id: tgId,
-              business_connection_id: bcId,
-            }),
-          })
-
-          const data = await response.json()
-          
-          if (!response.ok || !data?.ok || !data?.link) {
-            throw new Error(data?.error || 'INVOICE_FAILED')
-          }
-
-          // Открываем ссылку на бота
-          if (tg?.openTelegramLink) {
-            tg.openTelegramLink(data.link)
-          } else {
-            window.open(data.link, '_blank')
-          }
-
-          // Показываем уведомление
-          const toast = document.createElement("div")
-          toast.className = "fixed left-1/2 -translate-x-1/2 bottom-6 z-50 bg-slate-900 text-white px-4 py-2 rounded-xl"
-          toast.textContent = "Открой чат с ботом для оплаты"
-          document.body.appendChild(toast)
-          setTimeout(() => toast.remove(), 2000)
-
+          // Fallback - открываем ссылку в браузере
+          window.open(data.link, '_blank')
+          showNotification('Откройте чат с ботом для оплаты')
           onClose()
         }
 
@@ -233,13 +215,13 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 z-50 overflow-y-auto"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="glass-dark p-4 rounded-2xl shadow-modern-lg w-full max-w-sm my-4 max-h-[90vh] overflow-y-auto"
+        className="glass-dark p-6 rounded-2xl shadow-modern-lg w-full max-w-sm my-4 max-h-[90vh] overflow-y-auto border border-purple-700/50"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gradient text-glow">Пополнение через Telegram Stars</h2>
@@ -260,12 +242,12 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
             <select
               value={formData.cardId}
               onChange={(e) => handleInputChange('cardId', e.target.value)}
-              className={`w-full modern-input ${errors.cardId ? 'border-red-500' : ''}`}
+              className={`w-full modern-input bg-white/10 border-white/20 text-white placeholder-white/70 ${errors.cardId ? 'border-red-500' : ''}`}
               disabled={isLoading}
             >
-              <option value="">Выберите карту</option>
+              <option value="" className="bg-gray-800 text-white">Выберите карту</option>
               {activeCards.map((card) => (
-                <option key={card.id} value={card.id}>
+                <option key={card.id} value={card.id} className="bg-gray-800 text-white">
                   {card.card_number.slice(-4)} - {card.balance.toLocaleString('ru-RU')} ₽
                 </option>
               ))}
@@ -286,7 +268,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
               value={formData.starsAmount}
               onChange={(e) => handleInputChange('starsAmount', e.target.value)}
               placeholder="100"
-              className={`w-full modern-input ${errors.starsAmount ? 'border-red-500' : ''}`}
+              className={`w-full modern-input bg-white/10 border-white/20 text-white placeholder-white/70 ${errors.starsAmount ? 'border-red-500' : ''}`}
               disabled={isLoading}
               min="1"
               max="10000"
