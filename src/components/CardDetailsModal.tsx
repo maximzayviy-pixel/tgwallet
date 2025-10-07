@@ -141,7 +141,7 @@ const CardDetailsModal: React.FC<CardDetailsModalProps> = ({
               <div>
                 <p className="text-gray-500 text-sm">CVV</p>
                 <div className="flex items-center space-x-2">
-                  <p className="font-mono font-semibold">{card.cvv}</p>
+                  <p className="font-mono font-semibold text-gray-900">{card.cvv}</p>
                   <button
                     onClick={() => handleCopy(card.cvv)}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -153,7 +153,7 @@ const CardDetailsModal: React.FC<CardDetailsModalProps> = ({
               <div>
                 <p className="text-gray-500 text-sm">Полный номер</p>
                 <div className="flex items-center space-x-2">
-                  <p className="font-mono font-semibold text-sm">{card.card_number}</p>
+                  <p className="font-mono font-semibold text-sm text-gray-900">{card.card_number}</p>
                   <button
                     onClick={() => handleCopy(card.card_number)}
                     className="p-1 hover:bg-gray-100 rounded"
