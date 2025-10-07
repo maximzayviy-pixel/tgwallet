@@ -70,6 +70,7 @@ ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Политика для payment_requests - пользователи могут видеть только свои запросы
+DROP POLICY IF EXISTS "Users can view own payment requests" ON payment_requests;
 CREATE POLICY "Users can view own payment requests" ON payment_requests
   FOR SELECT USING (tg_id = (current_setting('request.jwt.claims', true)::json->>'tg_id')::bigint);
 

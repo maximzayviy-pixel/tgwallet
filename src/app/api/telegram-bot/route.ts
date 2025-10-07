@@ -4,20 +4,27 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('Bot received update:', JSON.stringify(body, null, 2))
+    
     const { message, callback_query } = body
 
     // Обработка сообщений
     if (message) {
       const { text, from, chat } = message
+      console.log('Processing message:', { text, fromId: from.id, chatId: chat.id })
       
       if (text?.startsWith('/start')) {
         const args = text.split(' ')
+        console.log('Start command args:', args)
+        
         if (args.length > 1 && args[1].startsWith('pay_')) {
           // Обработка команды /start pay_uuid
           const paymentRequestId = args[1].replace('pay_', '')
+          console.log('Processing payment request:', paymentRequestId)
           return await handlePaymentRequest(paymentRequestId, from.id, chat.id)
         } else {
           // Обычный /start
+          console.log('Regular start command')
           return await sendMessage(chat.id, 'Добро пожаловать в Stellex Bank! 🏦\n\nДля пополнения карты используйте приложение.')
         }
       }
@@ -52,7 +59,8 @@ export async function POST(request: NextRequest) {
 async function handlePaymentRequest(paymentRequestId: string, userId: number, chatId: number) {
   try {
     // Получаем данные запроса из базы данных
-    const { data: paymentRequest, error } = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/payment-request/${paymentRequestId}`)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tgwallet-ei8z.vercel.app'
+    const { data: paymentRequest, error } = await fetch(`${appUrl}/api/payment-request/${paymentRequestId}`)
       .then(res => res.json())
 
     if (error || !paymentRequest) {
