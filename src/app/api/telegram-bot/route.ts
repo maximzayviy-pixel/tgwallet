@@ -25,16 +25,19 @@ export async function POST(request: NextRequest) {
         } else {
           // Обычный /start
           console.log('Regular start command')
-          return await sendMessage(chat.id, 'Добро пожаловать в Stellex Bank! 🏦\n\nДля пополнения карты используйте приложение.')
+          await sendMessage(chat.id, 'Добро пожаловать в Stellex Bank! 🏦\n\nДля пополнения карты используйте приложение.')
+          return NextResponse.json({ ok: true })
         }
       }
       
       if (text === '/balance') {
-        return await sendMessage(chat.id, 'Для просмотра баланса используйте приложение.')
+        await sendMessage(chat.id, 'Для просмотра баланса используйте приложение.')
+        return NextResponse.json({ ok: true })
       }
       
       if (text === '/help') {
-        return await sendMessage(chat.id, 'Доступные команды:\n/start - Запустить бота\n/balance - Показать баланс\n/help - Помощь')
+        await sendMessage(chat.id, 'Доступные команды:\n/start - Запустить бота\n/balance - Показать баланс\n/help - Помощь')
+        return NextResponse.json({ ok: true })
       }
     }
 
@@ -44,7 +47,8 @@ export async function POST(request: NextRequest) {
       
       if (data?.startsWith('pay_')) {
         const paymentRequestId = data.replace('pay_', '')
-        return await handlePaymentRequest(paymentRequestId, from.id, message.chat.id)
+        await handlePaymentRequest(paymentRequestId, from.id, message.chat.id)
+        return NextResponse.json({ ok: true })
       }
     }
 
@@ -64,14 +68,16 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       .then(res => res.json())
 
     if (error || !paymentRequest) {
-      return await sendMessage(chatId, '❌ Запрос на пополнение не найден или истек.')
+      await sendMessage(chatId, '❌ Запрос на пополнение не найден или истек.')
+      return
     }
 
     if (paymentRequest.status !== 'pending') {
-      return await sendMessage(chatId, '❌ Этот запрос уже обработан.')
+      await sendMessage(chatId, '❌ Этот запрос уже обработан.')
+      return
     }
 
-    // Создаем инвойс для оплаты звездами
+    // Создаем инвойс для оплаты звездами согласно документации
     const invoice = {
       chat_id: chatId,
       title: `Пополнение карты Stellex`,
@@ -86,7 +92,7 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       currency: 'XTR', // Telegram Stars currency
       prices: [
         {
-          label: `Пополнение на ${paymentRequest.amount_rub} ₽`,
+          label: 'XTR', // Согласно документации - должно быть XTR
           amount: paymentRequest.amount_stars * 100 // Telegram Stars в копейках
         }
       ],
@@ -99,6 +105,8 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       send_phone_number_to_provider: false,
       send_email_to_provider: false
     }
+
+    console.log('Sending invoice:', invoice)
 
     // Отправляем инвойс
     const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendInvoice`, {
@@ -117,12 +125,9 @@ async function handlePaymentRequest(paymentRequestId: string, userId: number, ch
       console.error('Failed to send invoice:', result)
       await sendMessage(chatId, '❌ Ошибка создания инвойса. Попробуйте позже.')
     }
-
-    return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('Payment request error:', error)
     await sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.')
-    return NextResponse.json({ ok: true })
   }
 }
 
