@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Clock, CheckCircle, XCircle, Star } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
@@ -15,7 +15,7 @@ interface PaymentData {
   created_at: string
 }
 
-export default function PaymentPage({ params }: { params: { id: string } }) {
+export default function PaymentPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isWebMode } = useAuth()
   const [payment, setPayment] = useState<PaymentData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -24,12 +24,13 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     loadPaymentData()
-  }, [params.id])
+  }, [loadPaymentData])
 
-  const loadPaymentData = async () => {
+  const loadPaymentData = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/payments/${params.id}`)
+      const { id } = await params
+      const response = await fetch(`/api/payments/${id}`)
       const data = await response.json()
 
       if (data.success) {
@@ -42,7 +43,7 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params])
 
   const handlePayment = async () => {
     if (!user) {
