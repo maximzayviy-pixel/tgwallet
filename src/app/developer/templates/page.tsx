@@ -195,8 +195,8 @@ export default function TemplatesPage() {
       xl: { padding: '20px 40px', fontSize: '20px' }
     }
 
-    const currentStyle = buttonStyles[config.style]
-    const currentSize = sizeStyles[config.size]
+    const currentStyle = buttonStyles[config.style as keyof typeof buttonStyles]
+    const currentSize = sizeStyles[config.size as keyof typeof sizeStyles]
 
     const baseStyles = {
       ...currentStyle,
