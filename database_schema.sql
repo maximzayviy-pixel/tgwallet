@@ -3,10 +3,15 @@
 -- Таблица пользователей (если еще не создана)
 CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  telegram_id BIGINT UNIQUE NOT NULL,
+  telegram_id BIGINT UNIQUE,
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255),
   first_name TEXT,
   last_name TEXT,
   username TEXT,
+  language_code VARCHAR(10),
+  is_premium BOOLEAN DEFAULT FALSE,
+  email_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -62,6 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_payment_requests_created_at ON payment_requests(c
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_card_id ON transactions(card_id);
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- RLS политики (если нужно)
 ALTER TABLE payment_requests ENABLE ROW LEVEL SECURITY;

@@ -14,10 +14,15 @@ export interface Card {
 
 export interface User {
   id: string;
-  telegram_id: number;
+  telegram_id?: number;
+  email?: string;
+  password_hash?: string;
   username?: string;
   first_name: string;
   last_name?: string;
+  language_code?: string;
+  is_premium?: boolean;
+  email_verified?: boolean;
   total_spent: number;
   created_at: string;
   updated_at: string;

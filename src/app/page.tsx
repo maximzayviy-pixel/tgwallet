@@ -10,6 +10,8 @@ import TelegramStarsModal from '@/components/TelegramStarsModal';
 import CardDetailsModal from '@/components/CardDetailsModal';
 import BottomNavigation from '@/components/BottomNavigation';
 import SpaceLoader from '@/components/SpaceLoader';
+import AuthProvider from '@/components/AuthProvider';
+import WebBankApp from '@/components/WebBankApp';
 import { Card, TopUpData, User } from '@/types';
 import { createCard, generateId } from '@/lib/cardUtils';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +23,7 @@ import {
   getTelegramUser
 } from '@/lib/telegramUtils';
 
-export default function Home() {
+function TelegramBankApp() {
   const [user, setUser] = useState<User | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   // Убираем форму создания карт - создаем автоматически
@@ -680,4 +682,50 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <AppRouter />
+    </AuthProvider>
+  );
+}
+
+function AppRouter() {
+  const [isWebMode, setIsWebMode] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Проверяем, есть ли токен в localStorage (веб-режим)
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setIsWebMode(true);
+    } else {
+      // Проверяем, есть ли Telegram WebApp
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        setIsWebMode(false);
+      } else {
+        // Перенаправляем на логин для веб-режима
+        window.location.href = '/login';
+        return;
+      }
+    }
+  }, []);
+
+  if (isWebMode === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isWebMode) {
+    return <WebBankApp />;
+  }
+
+  return <TelegramBankApp />;
 }
