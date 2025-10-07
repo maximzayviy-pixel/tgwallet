@@ -9,12 +9,19 @@ export async function POST(request: NextRequest) {
 
     // Проверяем API ключ (если не передан, используем дефолтный)
     const expectedApiKey = process.env.API_KEY || 'test_key'
+    console.log('API Key check:', { provided: api_key, expected: expectedApiKey })
+    
     if (api_key && api_key !== expectedApiKey) {
       return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
     }
 
     if (!card_id || !stars_amount || stars_amount <= 0) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+    }
+
+    // Если API ключ не передан, используем дефолтный режим
+    if (!api_key) {
+      console.log('No API key provided, using default mode')
     }
 
     // Конвертируем Telegram Stars в рубли (1 звезда = 1 рубль)

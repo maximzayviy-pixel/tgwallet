@@ -7,6 +7,7 @@ import VirtualCard from '@/components/VirtualCard';
 import TopUpModal from '@/components/TopUpModal';
 import TransferModal from '@/components/TransferModal';
 import TelegramStarsModal from '@/components/TelegramStarsModal';
+import CardDetailsModal from '@/components/CardDetailsModal';
 import BottomNavigation from '@/components/BottomNavigation';
 import SpaceLoader from '@/components/SpaceLoader';
 import { Card, TopUpData, User } from '@/types';
@@ -29,6 +30,14 @@ export default function Home() {
   const [showTelegramStarsModal, setShowTelegramStarsModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Settings state
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [biometryEnabled, setBiometryEnabled] = useState(false);
+  const [darkThemeEnabled, setDarkThemeEnabled] = useState(false);
+  
+  // Card details modal
+  const [showCardDetailsModal, setShowCardDetailsModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'cards' | 'history' | 'settings'>('cards');
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -450,113 +459,31 @@ export default function Home() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {cards.map((card, index) => (
-                      <motion.div
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {cards.map((card) => (
+                      <VirtualCard
                         key={card.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 text-white relative overflow-hidden cursor-pointer"
-                        onClick={() => setExpandedCard(expandedCard === card.id ? null : card.id)}
-                      >
-                        {/* Card Design */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                              <CreditCard className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-300">Stellex Card</p>
-                              <p className="font-semibold">{card.holder_name}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold">{card.balance.toLocaleString('ru-RU')} ₽</p>
-                            <p className="text-sm text-gray-300">
-                              {card.status === 'active' ? 'Активна' : 'Ожидает активации'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Card Number */}
-                        <div className="mb-4">
-                          <p className="text-sm text-gray-300 mb-1">Номер карты</p>
-                          <p className="text-lg font-mono tracking-wider">
-                            {card.card_number.replace(/(.{4})/g, '$1 ').trim()}
-                          </p>
-                        </div>
-
-                        {/* Card Details */}
-                        <div className="flex items-center justify-between text-sm">
-                          <div>
-                            <p className="text-gray-300">Срок действия</p>
-                            <p className="font-mono">{card.expiry_date}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-300">CVV</p>
-                            <p className="font-mono">{card.cvv}</p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCard(card);
-                                setShowTopUpModal(true);
-                              }}
-                              className="bg-white/20 px-3 py-1 rounded-lg text-xs"
-                            >
-                              Пополнить
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCard(card);
-                                setShowTelegramStarsModal(true);
-                              }}
-                              className="bg-yellow-500/20 px-3 py-1 rounded-lg text-xs text-yellow-200"
-                            >
-                              ⭐ Звезды
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCard(card);
-                                setShowTransferModal(true);
-                              }}
-                              className="bg-white/20 px-3 py-1 rounded-lg text-xs"
-                            >
-                              Перевести
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Expanded Details */}
-                        <AnimatePresence>
-                          {expandedCard === card.id && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="mt-4 pt-4 border-t border-white/20"
-                            >
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p className="text-gray-300">Тип карты</p>
-                                  <p className="font-semibold">Stellex Virtual</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-300">Создана</p>
-                                  <p className="font-semibold">
-                                    {new Date(card.created_at).toLocaleDateString('ru-RU')}
-                                  </p>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
+                        card={card}
+                        compact={true}
+                        onCopy={(text) => showNotification(`Скопировано: ${text}`)}
+                        onExpand={() => {
+                          // Открываем модальное окно с полной информацией о карте
+                          setSelectedCard(card);
+                          setShowCardDetailsModal(true);
+                        }}
+                        onTopUp={() => {
+                          setSelectedCard(card);
+                          setShowTopUpModal(true);
+                        }}
+                        onTransfer={() => {
+                          setSelectedCard(card);
+                          setShowTransferModal(true);
+                        }}
+                        onStarsTopUp={() => {
+                          setSelectedCard(card);
+                          setShowTelegramStarsModal(true);
+                        }}
+                      />
                     ))}
                   </div>
                 )}
@@ -583,30 +510,60 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Настройки</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-gray-700">Уведомления</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Уведомления</span>
+                      <span className="text-gray-500 text-sm">Push-уведомления о транзакциях</span>
+                    </div>
                     <button 
-                      onClick={() => showNotification('Настройки уведомлений', 'success')}
-                      className="w-12 h-6 bg-purple-500 rounded-full relative"
+                      onClick={() => {
+                        setNotificationsEnabled(!notificationsEnabled);
+                        showNotification(notificationsEnabled ? 'Уведомления отключены' : 'Уведомления включены');
+                      }}
+                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${
+                        notificationsEnabled ? 'bg-purple-500' : 'bg-gray-300'
+                      }`}
                     >
-                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                      <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform duration-200 ${
+                        notificationsEnabled ? 'right-0.5' : 'left-0.5'
+                      }`}></div>
                     </button>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="text-gray-700">Биометрия</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Биометрия</span>
+                      <span className="text-gray-500 text-sm">Вход по отпечатку пальца</span>
+                    </div>
                     <button 
-                      onClick={() => showNotification('Биометрия недоступна', 'warning')}
-                      className="w-12 h-6 bg-gray-300 rounded-full relative"
+                      onClick={() => {
+                        setBiometryEnabled(!biometryEnabled);
+                        showNotification(biometryEnabled ? 'Биометрия отключена' : 'Биометрия включена');
+                      }}
+                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${
+                        biometryEnabled ? 'bg-purple-500' : 'bg-gray-300'
+                      }`}
                     >
-                      <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5"></div>
+                      <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform duration-200 ${
+                        biometryEnabled ? 'right-0.5' : 'left-0.5'
+                      }`}></div>
                     </button>
                   </div>
                   <div className="flex items-center justify-between py-3">
-                    <span className="text-gray-700">Темная тема</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Темная тема</span>
+                      <span className="text-gray-500 text-sm">Переключение темы интерфейса</span>
+                    </div>
                     <button 
-                      onClick={() => showNotification('Темная тема в разработке', 'warning')}
-                      className="w-12 h-6 bg-gray-300 rounded-full relative"
+                      onClick={() => {
+                        setDarkThemeEnabled(!darkThemeEnabled);
+                        showNotification(darkThemeEnabled ? 'Светлая тема включена' : 'Темная тема включена');
+                      }}
+                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${
+                        darkThemeEnabled ? 'bg-purple-500' : 'bg-gray-300'
+                      }`}
                     >
-                      <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5"></div>
+                      <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform duration-200 ${
+                        darkThemeEnabled ? 'right-0.5' : 'left-0.5'
+                      }`}></div>
                     </button>
                   </div>
                 </div>
@@ -674,6 +631,30 @@ export default function Home() {
               }}
               isLoading={isLoading}
               showNotification={(message) => showNotification(message, 'success')}
+            />
+          )}
+
+          {/* Card Details Modal */}
+          {showCardDetailsModal && selectedCard && (
+            <CardDetailsModal
+              card={selectedCard}
+              onClose={() => {
+                setShowCardDetailsModal(false);
+                setSelectedCard(null);
+              }}
+              onCopy={(text) => showNotification(`Скопировано: ${text}`)}
+              onTopUp={() => {
+                setShowCardDetailsModal(false);
+                setShowTopUpModal(true);
+              }}
+              onTransfer={() => {
+                setShowCardDetailsModal(false);
+                setShowTransferModal(true);
+              }}
+              onStarsTopUp={() => {
+                setShowCardDetailsModal(false);
+                setShowTelegramStarsModal(true);
+              }}
             />
           )}
         </AnimatePresence>

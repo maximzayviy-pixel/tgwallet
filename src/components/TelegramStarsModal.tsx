@@ -68,7 +68,7 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
         body: JSON.stringify({
           card_id: formData.cardId,
           stars_amount: starsAmount,
-          api_key: process.env.NEXT_PUBLIC_API_KEY || 'test_key',
+          api_key: 'test_key', // API ключ для Telegram Stars
           telegram_user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id
         }),
       })
