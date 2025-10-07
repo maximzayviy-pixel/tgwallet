@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     if (!TG_BOT_TOKEN || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       console.log('Missing required environment variables')
-      return ok(new NextResponse())
+      return ok()
     }
 
     const update = await request.json()
