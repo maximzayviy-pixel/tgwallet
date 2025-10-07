@@ -89,7 +89,12 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           alternativeSendInvoice: !!(window as any).TelegramWebApp?.sendInvoice
         });
         
-        const webApp = window.Telegram?.WebApp;
+        // Проверяем разные способы доступа к Telegram WebApp
+        let webApp = window.Telegram?.WebApp;
+        if (!webApp) {
+          webApp = (window as any).TelegramWebApp;
+        }
+        
         if (webApp && webApp.sendInvoice) {
           webApp.sendInvoice(data.invoice_data, (status) => {
             if (status === 'paid') {
@@ -102,22 +107,10 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
             }
           })
         } else {
-          // Пробуем альтернативный способ
-          if ((window as any).TelegramWebApp?.sendInvoice) {
-            (window as any).TelegramWebApp.sendInvoice(data.invoice_data, (status: string) => {
-              if (status === 'paid') {
-                handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
-              } else if (status === 'cancelled') {
-                showNotification('Оплата отменена')
-              } else if (status === 'failed') {
-                showNotification('Ошибка оплаты')
-              }
-            })
-          } else {
-            // Fallback для браузера - показываем данные инвойса
-            console.log('Invoice data:', data.invoice_data)
-            showNotification('Telegram WebApp не найден. Данные инвойса в консоли.')
-          }
+          // Fallback для браузера - показываем данные инвойса
+          console.log('Invoice data:', data.invoice_data)
+          console.log('Available window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('telegram')))
+          showNotification('Telegram WebApp не найден. Проверьте консоль для отладки.')
         }
       } else {
         throw new Error(data.error || 'Failed to create invoice')
@@ -173,16 +166,16 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 z-50 overflow-y-auto"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="glass-dark p-8 rounded-3xl shadow-modern-lg w-full max-w-md"
+        className="glass-dark p-4 rounded-2xl shadow-modern-lg w-full max-w-sm my-4 max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gradient text-glow">Пополнение через Telegram Stars</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gradient text-glow">Пополнение через Telegram Stars</h2>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -193,10 +186,10 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
           </motion.button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Карта */}
           <div>
-            <label className="block text-white font-bold mb-3">Карта для пополнения</label>
+            <label className="block text-white font-bold mb-2 text-sm">Карта для пополнения</label>
             <select
               value={formData.cardId}
               onChange={(e) => handleInputChange('cardId', e.target.value)}

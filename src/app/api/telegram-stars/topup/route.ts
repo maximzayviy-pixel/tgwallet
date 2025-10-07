@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
     if (api_key && api_key !== expectedApiKey && api_key !== supabaseAnonKey) {
       console.log('Invalid API key provided, but continuing with request')
       // Не блокируем запрос, если ключ неверный - продолжаем выполнение
+    } else {
+      console.log('API key accepted:', api_key ? 'provided' : 'not provided')
     }
 
     if (!card_id || !stars_amount || stars_amount <= 0) {
