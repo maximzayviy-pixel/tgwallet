@@ -56,15 +56,82 @@ const TelegramStarsModal: React.FC<TelegramStarsModalProps> = ({
     if (!validateForm()) return
 
     try {
-      await onTopUp({
-        cardId: formData.cardId,
-        starsAmount: parseInt(formData.starsAmount)
+      const starsAmount = parseInt(formData.starsAmount)
+      const rubAmount = starsAmount * 1 // 1 звезда = 1 рубль
+
+      // Создаем инвойс через API
+      const response = await fetch('/api/telegram-stars/topup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          card_id: formData.cardId,
+          stars_amount: starsAmount,
+          api_key: process.env.NEXT_PUBLIC_API_KEY || 'test_key',
+          telegram_user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+        }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to create invoice')
+      }
+
+      const data = await response.json()
       
-      showNotification('Пополнение выполнено успешно')
-      onClose()
+      if (data.success && data.invoice_data) {
+        // Используем Telegram WebApp API для создания инвойса
+        if (window.Telegram?.WebApp?.sendInvoice) {
+          window.Telegram.WebApp.sendInvoice(data.invoice_data, (status) => {
+            if (status === 'paid') {
+              // Обрабатываем успешную оплату
+              handlePaymentSuccess(formData.cardId, starsAmount, rubAmount)
+            } else if (status === 'cancelled') {
+              showNotification('Оплата отменена')
+            } else if (status === 'failed') {
+              showNotification('Ошибка оплаты')
+            }
+          })
+        } else {
+          // Fallback для браузера
+          showNotification('Функция доступна только в Telegram')
+        }
+      } else {
+        throw new Error(data.error || 'Failed to create invoice')
+      }
     } catch (error) {
-      showNotification('Ошибка при пополнении')
+      console.error('Top-up error:', error)
+      showNotification('Ошибка при создании инвойса')
+    }
+  }
+
+  const handlePaymentSuccess = async (cardId: string, starsAmount: number, rubAmount: number) => {
+    try {
+      // Отправляем данные об успешной оплате
+      const response = await fetch('/api/telegram-stars/payment-success', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          card_id: cardId,
+          stars_amount: starsAmount,
+          rub_amount: rubAmount,
+          user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+        }),
+      })
+
+      if (response.ok) {
+        showNotification(`Карта пополнена на ${rubAmount} ₽!`)
+        setFormData({ cardId: '', starsAmount: '' })
+        setErrors({})
+        onClose()
+      } else {
+        throw new Error('Failed to process payment')
+      }
+    } catch (error) {
+      console.error('Payment success error:', error)
+      showNotification('Ошибка при обработке платежа')
     }
   }
 

@@ -24,100 +24,41 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
-    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder') || supabaseKey.includes('placeholder')) {
-      console.log('Supabase not configured, creating mock transaction')
-      
-      // Создаем mock транзакцию
-      const mockTransaction = {
-        id: `stars_${Date.now()}`,
+    // Создаем инвойс в Telegram для оплаты звездами
+    const invoiceData = {
+      title: `Пополнение карты на ${rubAmount} ₽`,
+      description: `Пополнение виртуальной карты через Telegram Stars`,
+      payload: JSON.stringify({
         card_id: card_id,
-        user_id: 'mock_user_id',
-        type: 'telegram_stars_topup',
-        amount: rubAmount,
-        description: `Top-up via Telegram Stars (${stars_amount} ⭐)`,
-        status: 'completed',
-        external_id: `stars_${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-      
-      return NextResponse.json({ 
-        success: true, 
-        transaction_id: mockTransaction.id,
         stars_amount: stars_amount,
         rub_amount: rubAmount,
-        new_balance: rubAmount // Mock баланс
-      })
+        user_id: telegram_user_id
+      }),
+      provider_token: '', // Для Telegram Stars не нужен provider token
+      currency: 'XTR', // Telegram Stars currency
+      prices: [
+        {
+          label: `Пополнение на ${rubAmount} ₽`,
+          amount: stars_amount * 100 // Telegram Stars в копейках
+        }
+      ],
+      start_parameter: `topup_${card_id}_${Date.now()}`,
+      is_flexible: false,
+      need_name: false,
+      need_phone_number: false,
+      need_email: false,
+      need_shipping_address: false,
+      send_phone_number_to_provider: false,
+      send_email_to_provider: false
     }
 
-    // Получаем карту
-    const { data: card, error: cardError } = await supabase
-      .from('cards')
-      .select('*, users!inner(telegram_id)')
-      .eq('id', card_id)
-      .single()
-
-    if (cardError || !card) {
-      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
-    }
-
-    if (card.status !== 'active') {
-      return NextResponse.json({ error: 'Card is not active' }, { status: 400 })
-    }
-
-    // Проверяем, что карта принадлежит пользователю
-    if (telegram_user_id && card.users.telegram_id !== telegram_user_id) {
-      return NextResponse.json({ error: 'Card does not belong to user' }, { status: 403 })
-    }
-
-    // Создаем транзакцию
-    const { data: transaction, error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        card_id: card_id,
-        user_id: card.user_id,
-        type: 'telegram_stars_topup',
-        amount: rubAmount,
-        description: `Top-up via Telegram Stars (${stars_amount} ⭐)`,
-        status: 'pending',
-        external_id: `stars_${Date.now()}`
-      })
-      .select('*')
-      .single()
-
-    if (transactionError) {
-      return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 })
-    }
-
-    // Обновляем баланс карты
-    const { error: updateError } = await supabase
-      .from('cards')
-      .update({ 
-        balance: card.balance + rubAmount,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', card_id)
-
-    if (updateError) {
-      return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 })
-    }
-
-    // Обновляем статус транзакции
-    await supabase
-      .from('transactions')
-      .update({ 
-        status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transaction.id)
-
-    return NextResponse.json({ 
-      success: true, 
-      transaction_id: transaction.id,
-      stars_amount: stars_amount,
-      rub_amount: rubAmount,
-      new_balance: card.balance + rubAmount
+    // Возвращаем данные для создания инвойса
+    return NextResponse.json({
+      success: true,
+      invoice_data: invoiceData,
+      message: 'Invoice created successfully'
     })
+
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
