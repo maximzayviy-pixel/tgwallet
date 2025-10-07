@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем ссылку на бота для оплаты
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'your_bot'
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'stellexbank_bot'
     const invoiceLink = `https://t.me/${botUsername}?start=pay_${paymentRequest.id}`
 
     console.log('Invoice created:', { paymentRequestId: paymentRequest.id, link: invoiceLink })
